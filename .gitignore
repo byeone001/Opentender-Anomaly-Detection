@@ -1,0 +1,108 @@
+# ==============================================================
+# .gitignore untuk Proyek OpenTender Anomaly Detection
+# ==============================================================
+
+# --------------------------------------------------------------
+# 1. KREDENSIAL & RAHASIA (SANGAT PENTING - JANGAN DI-PUSH!)
+# --------------------------------------------------------------
+# Kunci Firebase, file env, token, dan private keys
+credentials/*
+!credentials/firebase-key.example.json
+!credentials/README.md
+*.pem
+*.key
+*.p12
+.env
+.env.*
+!.env.example
+
+# --------------------------------------------------------------
+# 2. DATASET & DATABASE BESAR (> 100MB DITOLAK GITHUB)
+# --------------------------------------------------------------
+# File CSV dataset mentah & database SQLite lokal (> 100MB - 500MB)
+dataset/*.csv
+dataset/*.zip
+dataset/*.tar.gz
+dataset/*.7z
+hasil_deteksi_anomali_opentender.csv
+validasi_sementara.sqlite
+*.sqlite
+*.sqlite3
+*.db
+
+# --------------------------------------------------------------
+# 3. ENVIRONMENT & VIRTUAL ENVIRONMENT
+# --------------------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# --------------------------------------------------------------
+# 4. PYTHON CACHE & BYTECODE
+# --------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing & Linting Cache
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# --------------------------------------------------------------
+# 5. STREAMLIT / WEB CACHE
+# --------------------------------------------------------------
+.streamlit/secrets.toml
+
+# --------------------------------------------------------------
+# 6. IDE & EDITOR TEMPORARY FILES
+# --------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --------------------------------------------------------------
+# 7. OS ARTIFACTS
+# --------------------------------------------------------------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# --------------------------------------------------------------
+# 8. MODEL MACHINE LEARNING (OPSIONAL)
+# --------------------------------------------------------------
+# Catatan: model_isolation_forest_opentender.joblib saat ini ~1.4MB (aman di bawah 100MB).
+# Jika nantinya model berukuran > 50-100MB, uncomment baris berikut:
+# *.joblib
+# *.pkl
+# *.h5
+# *.onnx
+
