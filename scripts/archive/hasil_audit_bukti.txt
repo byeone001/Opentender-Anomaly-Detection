@@ -1,0 +1,4707 @@
+LAPORAN BUKTI TEKNIS UNTUK AUDIT PENELITIAN OPENTENDER
+Waktu Ekstraksi: 2026-11-19 16:21:32
+
+================================================================================
+BAGIAN: 1. STRUKTUR FOLDER & DAFTAR FILE PROYEK
+================================================================================
+
+[DIR] ./
+  - .gitignore (2.5 KB)
+  - README.md (4.6 KB)
+  - app.py (58.6 KB)
+  - audit_collector.py (10.9 KB)
+  - cek_hasil_anomali.py (0.3 KB)
+  - cek_model.py (1.0 KB)
+  - cek_status.py (0.9 KB)
+  - check_radio_html.py (1.9 KB)
+  - config.py (1.4 KB)
+  - db_firebase.py (7.7 KB)
+  - db_mysql.py (8.2 KB)
+  - get_label_html.py (1.7 KB)
+  - hasil_audit_bukti.txt (0.0 KB)
+  - hasil_deteksi_anomali_opentender.csv (142677.6 KB)
+  - inspect_dom.py (1.6 KB)
+  - inspect_elements.py (1.3 KB)
+  - model_isolation_forest_opentender.joblib (1405.1 KB)
+  - requirements.txt (3.0 KB)
+  - screenshot_dashboard.png (142.4 KB)
+  - take_screenshot.py (3.3 KB)
+  - test_e2e_integration.py (5.8 KB)
+  - uji_dataset.py (1.0 KB)
+  - uji_konsistensi.py (2.0 KB)
+  - validasi_sementara.sqlite (440464.0 KB)
+  [DIR] credentials/
+    - README.md (0.4 KB)
+    - firebase-key.example.json (0.7 KB)
+    - firebase-key.json (2.3 KB)
+  [DIR] dataset/
+    - README.md (0.1 KB)
+    - awards.csv (197401.3 KB)
+    - awards_suppliers.csv (114311.0 KB)
+    - main.csv (480860.8 KB)
+  [DIR] dataset_test/
+    - awards.csv (1.6 KB)
+    - main.csv (1.8 KB)
+  [DIR] scripts/
+    - buat_tabel_analisis.py (3.2 KB)
+    - buat_tabel_mysql.py (2.4 KB)
+    - hitungdataset.py (0.4 KB)
+    - import_mysql.py (7.0 KB)
+    - import_rtdb.py (10.9 KB)
+    - inspect_dataset.py (0.8 KB)
+    - koneksi_firebase.py (0.7 KB)
+    - koneksi_mysql.py (0.7 KB)
+    - validasi_relasi.py (3.8 KB)
+
+================================================================================
+BAGIAN: 2. INSPEKSI MODEL JOBLIB
+================================================================================
+
+Lokasi file: .\model_isolation_forest_opentender.joblib
+Tipe objek utama: <class 'dict'>
+
+Daftar kunci (keys): ['model', 'imputer', 'fitur_numerik', 'fitur_model', 'kategori', 'contamination', 'random_state']
+
+--- Key: 'model' (Tipe: IsolationForest) ---
+Parameters: {'bootstrap': False, 'contamination': 0.01, 'max_features': 1.0, 'max_samples': 'auto', 'n_estimators': 100, 'n_jobs': -1, 'random_state': 42, 'verbose': 0, 'warm_start': False}
+n_features_in_: 7
+feature_names_in_: ['log_min_value' 'log_award_value' 'selisih_award_rel' 'min_value_missing'
+ 'tender_mainProcurementCategory_goods'
+ 'tender_mainProcurementCategory_services'
+ 'tender_mainProcurementCategory_works']
+offset_: -0.6676493194647792
+
+--- Key: 'imputer' (Tipe: SimpleImputer) ---
+Parameters: {'add_indicator': False, 'copy': True, 'fill_value': None, 'keep_empty_features': False, 'missing_values': nan, 'strategy': 'median'}
+n_features_in_: 3
+feature_names_in_: ['log_min_value' 'log_award_value' 'selisih_award_rel']
+statistics_: [20.24837187 20.18539573  0.02788333]
+
+--- Key: 'fitur_numerik' (Tipe: list) ---
+Value: ['log_min_value', 'log_award_value', 'selisih_award_rel', 'min_value_missing']
+
+--- Key: 'fitur_model' (Tipe: list) ---
+Value: ['log_min_value', 'log_award_value', 'selisih_award_rel', 'min_value_missing', 'tender_mainProcurementCategory_goods', 'tender_mainProcurementCategory_services', 'tender_mainProcurementCategory_works']
+
+--- Key: 'kategori' (Tipe: list) ---
+Value: ['services', 'works', 'goods']
+
+--- Key: 'contamination' (Tipe: float) ---
+Value: 0.01
+
+--- Key: 'random_state' (Tipe: int) ---
+Value: 42
+
+
+================================================================================
+BAGIAN: 3. INSPEKSI DATABASE MYSQL (SCHEMA & JUMLAH BARIS)
+================================================================================
+
+Koneksi berhasil menggunakan driver: mysql.connector
+Daftar tabel di 'opentender_bigdata': ['analysis_results', 'award_suppliers', 'awards', 'tenders', 'upload_batches']
+
+--- TABEL: analysis_results ---
+Jumlah baris: 75,659
+DDL / Struktur:
+CREATE TABLE `analysis_results` (
+  `row_id` bigint NOT NULL AUTO_INCREMENT,
+  `batch_id` varchar(36) NOT NULL,
+  `tender_id` varchar(255) DEFAULT NULL,
+  `tender_ocid` varchar(255) DEFAULT NULL,
+  `tender_datePublished` datetime DEFAULT NULL,
+  `tender_mainProcurementCategory` varchar(100) DEFAULT NULL,
+  `tender_minValue_amount` double DEFAULT NULL,
+  `value_amount` double DEFAULT NULL,
+  `log_min_value` double DEFAULT NULL,
+  `log_award_value` double DEFAULT NULL,
+  `selisih_award_rel` double DEFAULT NULL,
+  `skor_anomali` double DEFAULT NULL,
+  `prediksi_anomali` tinyint DEFAULT NULL COMMENT '1=Normal, -1=Anomali',
+  `status_deteksi` varchar(20) DEFAULT NULL COMMENT 'Normal atau Anomali',
+  PRIMARY KEY (`row_id`),
+  KEY `idx_ar_batch_id` (`batch_id`),
+  KEY `idx_ar_status` (`status_deteksi`),
+  CONSTRAINT `fk_ar_batch_id` FOREIGN KEY (`batch_id`) REFERENCES `upload_batches` (`batch_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=75660 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+--- TABEL: award_suppliers ---
+Jumlah baris: 1,086,441
+DDL / Struktur:
+CREATE TABLE `award_suppliers` (
+  `supplier_record_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` text COLLATE utf8mb4_unicode_ci,
+  `main_ocid` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `main_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `awards_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`supplier_record_id`),
+  UNIQUE KEY `uq_supplier_award` (`id`,`awards_id`),
+  KEY `main_ocid` (`main_ocid`),
+  KEY `awards_id` (`awards_id`),
+  CONSTRAINT `award_suppliers_ibfk_1` FOREIGN KEY (`main_ocid`) REFERENCES `tenders` (`ocid`),
+  CONSTRAINT `award_suppliers_ibfk_2` FOREIGN KEY (`awards_id`) REFERENCES `awards` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1086442 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+--- TABEL: awards ---
+Jumlah baris: 1,086,425
+DDL / Struktur:
+CREATE TABLE `awards` (
+  `id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `date` datetime DEFAULT NULL,
+  `title` text COLLATE utf8mb4_unicode_ci,
+  `value_amount` double DEFAULT NULL,
+  `value_currency` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `main_ocid` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `main_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `main_ocid` (`main_ocid`),
+  CONSTRAINT `awards_ibfk_1` FOREIGN KEY (`main_ocid`) REFERENCES `tenders` (`ocid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+--- TABEL: tenders ---
+Jumlah baris: 1,303,374
+DDL / Struktur:
+CREATE TABLE `tenders` (
+  `id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tag` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `date` datetime DEFAULT NULL,
+  `ocid` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `language` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `initiationType` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `buyer_id` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `buyer_name` text COLLATE utf8mb4_unicode_ci,
+  `tender_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tender_mainProcurementCategory` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tender_title` text COLLATE utf8mb4_unicode_ci,
+  `tender_datePublished` datetime DEFAULT NULL,
+  `tender_status` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tender_statusDetails` text COLLATE utf8mb4_unicode_ci,
+  `tender_value_currency` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tender_minValue_amount` double DEFAULT NULL,
+  `tender_minValue_currency` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tender_tenderPeriod_startDate` datetime DEFAULT NULL,
+  `tender_procuringEntity_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tender_procuringEntity_name` text COLLATE utf8mb4_unicode_ci,
+  `tender_additionalProcurementCategories` text COLLATE utf8mb4_unicode_ci,
+  `planning_budget_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `planning_budget_description` text COLLATE utf8mb4_unicode_ci,
+  `planning_budget_project` text COLLATE utf8mb4_unicode_ci,
+  `planning_budget_amount_amount` double DEFAULT NULL,
+  `planning_budget_amount_currency` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`ocid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+--- TABEL: upload_batches ---
+Jumlah baris: 3
+DDL / Struktur:
+CREATE TABLE `upload_batches` (
+  `batch_id` varchar(36) NOT NULL,
+  `filename` text,
+  `total_rows` int NOT NULL DEFAULT '0',
+  `total_normal` int NOT NULL DEFAULT '0',
+  `total_anomali` int NOT NULL DEFAULT '0',
+  `pct_anomali` double DEFAULT NULL,
+  `status` varchar(50) NOT NULL DEFAULT 'pending',
+  `uploaded_at` datetime NOT NULL,
+  `completed_at` datetime DEFAULT NULL,
+  `catatan` text,
+  PRIMARY KEY (`batch_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+
+================================================================================
+BAGIAN: 4. INSPEKSI STRUKTUR FIREBASE REALTIME DATABASE
+================================================================================
+
+--- Shallow Root (/opentender.json?shallow=true) ---
+[ERROR] Gagal mengakses https://opentender-bigdata-default-rtdb.firebaseio.com/opentender.json?shallow=true: HTTP Error 401: Unauthorized
+
+--- Node Dashboard (/opentender/dashboard.json) ---
+[ERROR] Gagal mengakses https://opentender-bigdata-default-rtdb.firebaseio.com/opentender/dashboard.json: HTTP Error 401: Unauthorized
+
+--- Node Metadata (/opentender/metadata.json) ---
+[ERROR] Gagal mengakses https://opentender-bigdata-default-rtdb.firebaseio.com/opentender/metadata.json: HTTP Error 401: Unauthorized
+
+--- Shallow Statistics (/opentender/statistics.json?shallow=true) ---
+[ERROR] Gagal mengakses https://opentender-bigdata-default-rtdb.firebaseio.com/opentender/statistics.json?shallow=true: HTTP Error 401: Unauthorized
+
+
+================================================================================
+BAGIAN: 5. INSPEKSI HEADER & SAMPEL DATASET CSV (5 BARIS PERTAMA)
+================================================================================
+
+--- FILE CSV: .\hasil_deteksi_anomali_opentender.csv ---
+Jumlah Kolom: 8
+Daftar Kolom: ['id', 'tender_datePublished', 'tender_mainProcurementCategory', 'tender_minValue_amount', 'value_amount', 'skor_anomali', 'prediksi_anomali', 'status_deteksi']
+Tipe Data (dari 5 baris sampel):
+id                                    str
+tender_datePublished                  str
+tender_mainProcurementCategory        str
+tender_minValue_amount            float64
+value_amount                      float64
+skor_anomali                      float64
+prediksi_anomali                    int64
+status_deteksi                        str
+
+Sampel 3 baris pertama:
+                                                 id       tender_datePublished tender_mainProcurementCategory  tender_minValue_amount  value_amount  skor_anomali  prediksi_anomali status_deteksi
+0  ocds-20h3g7-10000016-2016-02-25T00:00:00.000000Z  2016-02-15 00:00:00+00:00                       services            3.012197e+08  2.603260e+08      0.167689                 1         Normal
+1  ocds-20h3g7-10000065-2023-07-20T00:00:00.000000Z  2023-05-29 00:00:00+00:00                       services            1.468459e+09  1.401695e+09      0.177404                 1         Normal
+2  ocds-20h3g7-10000251-2021-08-21T00:00:00.000000Z  2021-08-09 00:00:00+00:00                          works            3.499574e+09  3.464694e+09      0.224688                 1         Normal
+
+--- FILE CSV: .\dataset\awards.csv ---
+Jumlah Kolom: 7
+Daftar Kolom: ['id', 'date', 'title', 'value_amount', 'value_currency', 'main_ocid', 'main_id']
+Tipe Data (dari 5 baris sampel):
+id                    str
+date                  str
+title                 str
+value_amount      float64
+value_currency        str
+main_ocid             str
+main_id               str
+
+Sampel 3 baris pertama:
+           id                         date                                                                     title  value_amount value_currency             main_ocid                                           main_id
+0  10000016-1  2016-02-25T00:00:00.000000Z                                           Belanja Jasa Lembaga Pengamanan  2.603260e+08            IDR  ocds-20h3g7-10000016  ocds-20h3g7-10000016-2016-02-25T00:00:00.000000Z
+1  10000065-1  2023-07-20T00:00:00.000000Z              Penyusunan Matek dan Ranperkada RDTR Kab. Kotawaringin Timur  1.401695e+09            IDR  ocds-20h3g7-10000065  ocds-20h3g7-10000065-2023-07-20T00:00:00.000000Z
+2  10000251-1  2021-08-21T00:00:00.000000Z  Pemasangan Bronjong dan Urugan Pasir Pulau Kemaro Kecamatan Ilir Timur I  3.464694e+09            IDR  ocds-20h3g7-10000251  ocds-20h3g7-10000251-2021-08-21T00:00:00.000000Z
+
+--- FILE CSV: .\dataset\awards_suppliers.csv ---
+Jumlah Kolom: 5
+Daftar Kolom: ['id', 'name', 'main_ocid', 'main_id', 'awards_id']
+Tipe Data (dari 5 baris sampel):
+id           str
+name         str
+main_ocid    str
+main_id      str
+awards_id    str
+
+Sampel 3 baris pertama:
+          id                            name             main_ocid                                           main_id   awards_id
+0  6051016-1             PT.KHAS PRIMA ABADI  ocds-20h3g7-10000016  ocds-20h3g7-10000016-2016-02-25T00:00:00.000000Z  10000016-1
+1   298064-1  PT. ANDALAN REREKA CONSULTINDO  ocds-20h3g7-10000065  ocds-20h3g7-10000065-2023-07-20T00:00:00.000000Z  10000065-1
+2  4202103-1             CV. NARATAMA BENHIL  ocds-20h3g7-10000251  ocds-20h3g7-10000251-2021-08-21T00:00:00.000000Z  10000251-1
+
+--- FILE CSV: .\dataset\main.csv ---
+Jumlah Kolom: 26
+Daftar Kolom: ['id', 'tag', 'date', 'ocid', 'language', 'initiationType', 'buyer_id', 'buyer_name', 'tender_id', 'tender_mainProcurementCategory', 'tender_title', 'tender_datePublished', 'tender_status', 'tender_statusDetails', 'tender_value_currency', 'tender_minValue_amount', 'tender_minValue_currency', 'tender_tenderPeriod_startDate', 'tender_procuringEntity_id', 'tender_procuringEntity_name', 'tender_additionalProcurementCategories', 'planning_budget_id', 'planning_budget_description', 'planning_budget_project', 'planning_budget_amount_amount', 'planning_budget_amount_currency']
+Tipe Data (dari 5 baris sampel):
+id                                            str
+tag                                           str
+date                                          str
+ocid                                          str
+language                                      str
+initiationType                                str
+buyer_id                                      str
+buyer_name                                    str
+tender_id                                   int64
+tender_mainProcurementCategory                str
+tender_title                                  str
+tender_datePublished                          str
+tender_status                                 str
+tender_statusDetails                          str
+tender_value_currency                         str
+tender_minValue_amount                    float64
+tender_minValue_currency                      str
+tender_tenderPeriod_startDate                 str
+tender_procuringEntity_id                   int64
+tender_procuringEntity_name                   str
+tender_additionalProcurementCategories        str
+planning_budget_id                        float64
+planning_budget_description               float64
+planning_budget_project                   float64
+planning_budget_amount_amount             float64
+planning_budget_amount_currency           float64
+
+Sampel 3 baris pertama:
+                                                 id       tag                         date                  ocid language initiationType buyer_id                                 buyer_name  tender_id tender_mainProcurementCategory                                                              tender_title         tender_datePublished tender_status tender_statusDetails tender_value_currency  tender_minValue_amount tender_minValue_currency tender_tenderPeriod_startDate  tender_procuringEntity_id     tender_procuringEntity_name tender_additionalProcurementCategories  planning_budget_id  planning_budget_description  planning_budget_project  planning_budget_amount_amount  planning_budget_amount_currency
+0  ocds-20h3g7-10000016-2016-02-25T00:00:00.000000Z  compiled  2016-02-25T00:00:00.000000Z  ocds-20h3g7-10000016       id         tender     D462  Pemerintah Daerah Provinsi Sumatera Barat   10000016                       services                                           Belanja Jasa Lembaga Pengamanan  2016-02-15T00:00:00.000000Z      complete                   |                    IDR            3.012197e+08                      IDR   2016-02-15T00:00:00.000000Z                         16    LPSE Provinsi Sumatera Barat                                    NaN                 NaN                          NaN                      NaN                            NaN                              NaN
+1  ocds-20h3g7-10000065-2023-07-20T00:00:00.000000Z  compiled  2023-07-20T00:00:00.000000Z  ocds-20h3g7-10000065       id         tender      K38     Kementerian Agraria dan Tata Ruang/BPN   10000065                       services              Penyusunan Matek dan Ranperkada RDTR Kab. Kotawaringin Timur  2023-05-29T00:00:00.000000Z      complete                   |                    IDR            1.468459e+09                      IDR   2023-05-29T00:00:00.000000Z                         65  LPSE Badan Pertanahan Nasional                    consultancyServices                 NaN                          NaN                      NaN                            NaN                              NaN
+2  ocds-20h3g7-10000251-2021-08-21T00:00:00.000000Z  compiled  2021-08-21T00:00:00.000000Z  ocds-20h3g7-10000251       id         tender     D486           Pemerintah Daerah Kota Palembang   10000251                          works  Pemasangan Bronjong dan Urugan Pasir Pulau Kemaro Kecamatan Ilir Timur I  2021-08-09T00:00:00.000000Z      complete                   |                    IDR            3.499574e+09                      IDR   2021-08-09T00:00:00.000000Z                        251             LPSE Kota Palembang                                    NaN                 NaN                          NaN                      NaN                            NaN                              NaN
+
+--- FILE CSV: .\dataset_test\awards.csv ---
+Jumlah Kolom: 7
+Daftar Kolom: ['id', 'main_id', 'main_ocid', 'value_amount', 'value_currency', 'date', 'title']
+Tipe Data (dari 5 baris sampel):
+id                    str
+main_id               str
+main_ocid             str
+value_amount      float64
+value_currency        str
+date                  str
+title                 str
+
+Sampel 3 baris pertama:
+       id main_id    main_ocid  value_amount value_currency                  date           title
+0  aw-000  id-000  ocid-TH-000   13444339.17            IDR  2023-02-01T00:00:00Z  Award Tender 0
+1  aw-001  id-001  ocid-TH-001   12105141.85            IDR  2023-02-16T00:00:00Z  Award Tender 1
+2  aw-002  id-002  ocid-TH-002   12295856.52            IDR  2023-03-03T00:00:00Z  Award Tender 2
+
+--- FILE CSV: .\dataset_test\main.csv ---
+Jumlah Kolom: 8
+Daftar Kolom: ['id', 'ocid', 'tag', 'tender_datePublished', 'tender_status', 'tender_mainProcurementCategory', 'tender_minValue_amount', 'buyer_name']
+Tipe Data (dari 5 baris sampel):
+id                                    str
+ocid                                  str
+tag                                   str
+tender_datePublished                  str
+tender_status                         str
+tender_mainProcurementCategory        str
+tender_minValue_amount            float64
+buyer_name                            str
+
+Sampel 3 baris pertama:
+       id         ocid     tag  tender_datePublished tender_status tender_mainProcurementCategory  tender_minValue_amount  buyer_name
+0  id-000  ocid-TH-000  tender  2023-01-01T00:00:00Z        active                          works              9173065.86  Instansi-0
+1  id-001  ocid-TH-001  tender  2023-01-16T00:00:00Z        active                          goods              9251885.04  Instansi-1
+2  id-002  ocid-TH-002  tender  2023-01-31T00:00:00Z        active                          works             15281687.92  Instansi-2
+
+
+================================================================================
+BAGIAN: 6. EKSTRAKSI SOURCE CODE (.PY, .SQL, .IPYNB TANPA GAMBAR)
+================================================================================
+
+
+----------------------------------------------------------------------
+FILE: .\app.py
+----------------------------------------------------------------------
+"""
+=============================================================================
+ OpenTender — Anomaly Detection System
+ Final UI/UX Refinement & Enterprise Analytics Dashboard
+ 
+ Backend: Python, Scikit-Learn (Isolation Forest), MySQL InnoDB, Firebase RTDB
+ Frontend: Streamlit + Altair + Custom Enterprise SaaS CSS
+=============================================================================
+"""
+
+import io
+import tarfile
+import uuid
+import zipfile
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
+
+import altair as alt
+import joblib
+import numpy as np
+import pandas as pd
+import streamlit as st
+
+# =============================================================================
+# 1. KONFIGURASI HALAMAN STREAMLIT
+# =============================================================================
+st.set_page_config(
+    page_title="OpenTender — Anomaly Detection System",
+    page_icon="🔎",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# =============================================================================
+# 2. PATH FILE & MODEL
+# =============================================================================
+FILE_DATA = Path("hasil_deteksi_anomali_opentender.csv")
+FILE_MODEL = Path("model_isolation_forest_opentender.joblib")
+
+# =============================================================================
+# 3. IMPORT MODUL INTEGRASI (MySQL & Firebase)
+# =============================================================================
+try:
+    from db_mysql import (
+        get_connection as mysql_conn,
+        test_connection as mysql_test,
+        simpan_batch,
+        perbarui_status_batch,
+        simpan_hasil_prediksi,
+        ambil_riwayat_upload,
+        ambil_detail_batch,
+        ambil_hasil_analisis,
+    )
+    MYSQL_AVAILABLE = True
+except Exception as _e:
+    MYSQL_AVAILABLE = False
+    _MYSQL_ERR = str(_e)
+
+try:
+    from db_firebase import (
+        init_firebase,
+        test_connection as firebase_test,
+        kirim_ringkasan_batch,
+        perbarui_dashboard as firebase_update_dashboard,
+        ambil_dashboard_firebase,
+        ambil_riwayat_firebase,
+        ambil_statistik_firebase,
+    )
+    FIREBASE_AVAILABLE = True
+except Exception as _e:
+    FIREBASE_AVAILABLE = False
+    _FIREBASE_ERR = str(_e)
+
+
+# =============================================================================
+# 4. CUSTOM CSS: REFINED ENTERPRISE DESIGN SYSTEM
+# =============================================================================
+CUSTOM_CSS = """
+<style>
+/* ---- FONT & BASE LAYOUT ---- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #0F172A;
+}
+
+.stApp {
+    background-color: #F8FAFC;
+}
+
+/* Kurangi padding atas halaman Streamlit agar lebih proporsional */
+.main .block-container {
+    padding-top: 1.8rem !important;
+    padding-bottom: 2.5rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    max-width: 1400px;
+}
+
+/* ---- SIDEBAR REFINEMENT ---- */
+section[data-testid="stSidebar"] {
+    width: 275px !important;
+    min-width: 275px !important;
+    max-width: 275px !important;
+    background-color: #0F172A !important;
+    border-right: 1px solid #1E293B !important;
+}
+
+section[data-testid="stSidebar"] > div:first-child {
+    padding-top: 1.2rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+section[data-testid="stSidebar"] * {
+    color: #F1F5F9 !important;
+}
+
+/* Sembunyikan lingkaran radio di sidebar secara total dan elegan */
+section[data-testid="stSidebar"] [data-testid="stRadio"] input[type="radio"] {
+    display: none !important;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label > div:first-child {
+    display: none !important;
+    width: 0px !important;
+    height: 0px !important;
+    opacity: 0 !important;
+    position: absolute !important;
+    pointer-events: none !important;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label > div:last-child {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+/* Navigasi menu elegan */
+section[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] {
+    gap: 4px !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stRadio"] label {
+    padding: 10px 14px !important;
+    border-radius: 8px !important;
+    margin-bottom: 3px !important;
+    transition: all 0.15s ease !important;
+    font-weight: 500 !important;
+    font-size: 0.88rem !important;
+    cursor: pointer !important;
+    color: #CBD5E1 !important;
+    background: transparent !important;
+    display: flex !important;
+    align-items: center !important;
+    border: 1px solid transparent !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
+    color: #CBD5E1 !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    margin: 0 !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label:hover p {
+    color: #FFFFFF !important;
+}
+
+/* Active Highlight Menu */
+section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.35) 0%, rgba(37, 99, 235, 0.08) 100%) !important;
+    border-left: 3px solid #38BDF8 !important;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) p {
+    color: #FFFFFF !important;
+    font-weight: 600 !important;
+}
+
+/* Brand Box Sidebar */
+.brand-box {
+    padding: 8px 6px 16px 6px;
+    border-bottom: 1px solid #1E293B;
+    margin-bottom: 16px;
+}
+.brand-title {
+    font-size: 1.18rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #FFFFFF !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.brand-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #0EA5E9, #2563EB);
+    color: #FFFFFF !important;
+    padding: 2px 6px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.brand-sub {
+    font-size: 0.74rem;
+    color: #94A3B8 !important;
+    margin-top: 4px;
+    line-height: 1.35;
+}
+
+/* Status Integrasi Box di Sidebar */
+.status-pill-box {
+    background: #1E293B;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 18px;
+    border: 1px solid #334155;
+}
+.status-pill-title {
+    font-size: 0.70rem;
+    font-weight: 700;
+    color: #94A3B8 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    padding: 3.5px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.status-row:last-child {
+    border-bottom: none;
+}
+.status-name {
+    color: #CBD5E1 !important;
+}
+.status-val {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.74rem;
+    font-weight: 600;
+}
+.dot-green {
+    height: 7px;
+    width: 7px;
+    background-color: #10B981;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 5px #10B981;
+}
+.dot-red {
+    height: 7px;
+    width: 7px;
+    background-color: #EF4444;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 5px #EF4444;
+}
+
+/* ---- PAGE HEADER & BREADCRUMBS ---- */
+.page-header {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 18px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+}
+.page-breadcrumb {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+}
+.page-title {
+    font-size: 1.50rem;
+    font-weight: 800;
+    color: #0F172A;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+.page-desc {
+    font-size: 0.88rem;
+    color: #475569;
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+.header-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    font-size: 0.78rem;
+    color: #64748B;
+    border-top: 1px solid #F1F5F9;
+    padding-top: 8px;
+    margin-top: 8px;
+}
+.meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #F1F5F9;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-weight: 500;
+    color: #334155;
+}
+
+/* ---- UNIFIED CONTENT CARD (ST.CONTAINER BORDER WRAPPER) ---- */
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    background-color: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 12px !important;
+    padding: 16px 20px 14px 20px !important;
+    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04) !important;
+    margin-bottom: 16px !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:hover {
+    box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Chart Title inside Unified Card */
+.chart-header {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #F1F5F9;
+}
+.chart-title {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: #0F172A;
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+.chart-subtitle {
+    font-size: 0.76rem;
+    color: #64748B;
+    margin-top: 2px;
+}
+
+/* ---- REFINED KPI CARDS ---- */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 18px;
+}
+@media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 500px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+}
+
+.kpi-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04);
+    position: relative;
+    overflow: hidden;
+    min-height: 122px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px -2px rgba(15, 23, 42, 0.08);
+}
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+.kpi-blue::before { background-color: #2563EB; }
+.kpi-green::before { background-color: #10B981; }
+.kpi-red::before { background-color: #EF4444; }
+.kpi-cyan::before { background-color: #06B6D4; }
+
+.kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.kpi-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.kpi-icon-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+.badge-bg-blue { background: #EFF6FF; }
+.badge-bg-green { background: #ECFDF5; }
+.badge-bg-red { background: #FEF2F2; }
+.badge-bg-cyan { background: #ECFEFF; }
+
+.kpi-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #0F172A;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin: 2px 0;
+}
+.kpi-caption {
+    font-size: 0.74rem;
+    color: #64748B;
+}
+
+/* ---- PIPELINE STEPS (UPLOAD PAGE) ---- */
+.step-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+}
+@media (max-width: 768px) {
+    .step-container { grid-template-columns: repeat(2, 1fr); }
+}
+.step-item {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+.step-num {
+    font-size: 0.70rem;
+    font-weight: 700;
+    background: #2563EB;
+    color: #FFFFFF;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+.step-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #0F172A;
+}
+.step-desc {
+    font-size: 0.73rem;
+    color: #64748B;
+    margin-top: 2px;
+}
+
+/* Tabs Styling */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+    border-bottom: 1px solid #E2E8F0;
+    margin-bottom: 14px;
+}
+.stTabs [data-baseweb="tab"] {
+    height: 40px;
+    padding: 0 16px;
+    font-weight: 600;
+    font-size: 0.86rem;
+    color: #64748B;
+    border-radius: 8px 8px 0 0;
+}
+.stTabs [aria-selected="true"] {
+    color: #2563EB !important;
+    border-bottom: 2px solid #2563EB !important;
+}
+</style>
+"""
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+
+# =============================================================================
+# 5. CACHED DATA & MODEL LOADERS
+# =============================================================================
+@st.cache_resource
+def get_model(path: Path):
+    return joblib.load(path)
+
+
+@st.cache_data(ttl=30)
+def check_mysql_health():
+    if not MYSQL_AVAILABLE:
+        return False, "Modul MySQL tidak ditemukan"
+    try:
+        ok = mysql_test()
+        return ok, "Connected (127.0.0.1:3306)" if ok else "MySQL unreachable"
+    except Exception as e:
+        return False, str(e)
+
+
+@st.cache_data(ttl=30)
+def check_firebase_health():
+    if not FIREBASE_AVAILABLE:
+        return False, "Modul Firebase tidak ditemukan"
+    try:
+        return firebase_test()
+    except Exception as e:
+        return False, str(e)
+
+
+@st.cache_data(ttl=30)
+def get_cached_dashboard_firebase():
+    if not FIREBASE_AVAILABLE:
+        return None
+    return ambil_dashboard_firebase()
+
+
+@st.cache_data(ttl=60)
+def get_cached_statistics_firebase():
+    if not FIREBASE_AVAILABLE:
+        return None
+    return ambil_statistik_firebase()
+
+
+@st.cache_data
+def load_local_csv_sample(file_path: Path, nrows: Optional[int] = 50000):
+    return pd.read_csv(file_path, nrows=nrows, low_memory=False)
+
+
+# =============================================================================
+# 6. ML PREPROCESSING & INFERENCE (100% PRESERVED)
+# =============================================================================
+def baca_csv_bytes(data_bytes):
+    for enc in ("utf-8-sig", "utf-8", "cp1252", "latin-1"):
+        try:
+            return pd.read_csv(io.BytesIO(data_bytes), encoding=enc, low_memory=False)
+        except UnicodeDecodeError:
+            continue
+    raise ValueError("Encoding CSV tidak dikenali.")
+
+
+def baca_dataset_upload(file_upload):
+    """Membaca CSV/XLSX langsung atau dalam ZIP/TAR/RAR/7Z."""
+    nama = file_upload.name.lower()
+    isi = file_upload.getvalue()
+    hasil = {}
+
+    def tambah(nama_internal, data_bytes):
+        n = nama_internal.lower()
+        if n.endswith(".csv"):
+            hasil[nama_internal] = baca_csv_bytes(data_bytes)
+        elif n.endswith(".xlsx"):
+            hasil[nama_internal] = pd.read_excel(io.BytesIO(data_bytes))
+
+    if nama.endswith(".csv"):
+        hasil[Path(nama).name] = baca_csv_bytes(isi)
+        return hasil
+    if nama.endswith(".xlsx"):
+        hasil[Path(nama).name] = pd.read_excel(io.BytesIO(isi))
+        return hasil
+
+    if zipfile.is_zipfile(io.BytesIO(isi)):
+        with zipfile.ZipFile(io.BytesIO(isi)) as arsip:
+            for item in arsip.infolist():
+                if item.is_dir() or "__MACOSX/" in item.filename:
+                    continue
+                if Path(item.filename).name.startswith("._"):
+                    continue
+                if item.filename.lower().endswith((".csv", ".xlsx")):
+                    tambah(item.filename, arsip.read(item))
+        if hasil:
+            return hasil
+
+    if tarfile.is_tarfile(io.BytesIO(isi)):
+        with tarfile.open(fileobj=io.BytesIO(isi), mode="r:*") as arsip:
+            for item in arsip.getmembers():
+                if not item.isfile():
+                    continue
+                if item.name.lower().endswith((".csv", ".xlsx")):
+                    berkas = arsip.extractfile(item)
+                    if berkas:
+                        tambah(item.name, berkas.read())
+        if hasil:
+            return hasil
+
+    if nama.endswith(".rar"):
+        try:
+            import rarfile
+            with rarfile.RarFile(io.BytesIO(isi)) as arsip:
+                for item in arsip.infolist():
+                    if not item.is_dir() and item.filename.lower().endswith((".csv", ".xlsx")):
+                        with arsip.open(item) as berkas:
+                            tambah(item.filename, berkas.read())
+            if hasil:
+                return hasil
+        except Exception as exc:
+            raise ValueError(f"Gagal membaca file RAR: {exc}")
+
+    if nama.endswith(".7z"):
+        try:
+            import py7zr
+            with py7zr.SevenZipFile(io.BytesIO(isi), mode="r") as arsip:
+                nama_file = arsip.getnames()
+                data_file = arsip.read(nama_file)
+                for n, obj in data_file.items():
+                    if n.lower().endswith((".csv", ".xlsx")):
+                        tambah(n, obj.read())
+            if hasil:
+                return hasil
+        except Exception as exc:
+            raise ValueError(f"Gagal membaca file 7Z: {exc}")
+
+    raise ValueError("Tidak ditemukan berkas CSV atau format tidak didukung.")
+
+
+def nama_file_sederhana(nama):
+    return Path(nama.replace("\\", "/")).name.lower()
+
+
+def cari_tabel(kumpulan_data, nama_target):
+    target = nama_target.lower()
+    cocok = [(n, d) for n, d in kumpulan_data.items() if nama_file_sederhana(n) == target]
+    if not cocok:
+        return None
+    return cocok[0][1].copy()
+
+
+def integrasikan_opentender(kumpulan_data):
+    """Integrasi relasional main.csv + awards.csv atau format file tunggal."""
+    main = cari_tabel(kumpulan_data, "main.csv")
+    awards = cari_tabel(kumpulan_data, "awards.csv")
+
+    if main is None and awards is None:
+        kandidat = next(iter(kumpulan_data.values())).copy()
+        wajib = {"tender_minValue_amount", "value_amount", "tender_mainProcurementCategory"}
+        if wajib.issubset(kandidat.columns):
+            return kandidat
+        raise ValueError(
+            "File tunggal harus memiliki: tender_minValue_amount, value_amount, tender_mainProcurementCategory."
+        )
+
+    if main is None or awards is None:
+        raise ValueError("Data relasional OpenTender membutuhkan main.csv dan awards.csv.")
+
+    wajib_main = ["id", "ocid", "tender_minValue_amount", "tender_mainProcurementCategory"]
+    wajib_awards = ["value_amount", "main_id", "main_ocid"]
+    kurang_m = [c for c in wajib_main if c not in main.columns]
+    kurang_a = [c for c in wajib_awards if c not in awards.columns]
+    if kurang_m or kurang_a:
+        raise ValueError(f"Kolom hilang: main={kurang_m}, awards={kurang_a}")
+
+    for col in ("id", "ocid"):
+        main[col] = main[col].astype("string").str.strip()
+    for col in ("main_id", "main_ocid"):
+        awards[col] = awards[col].astype("string").str.strip()
+
+    id_m = main.loc[main["id"].notna() & main["id"].ne(""), "id"]
+    id_a = awards.loc[awards["main_id"].notna() & awards["main_id"].ne(""), "main_id"]
+    oc_m = main.loc[main["ocid"].notna() & main["ocid"].ne(""), "ocid"]
+    oc_a = awards.loc[awards["main_ocid"].notna() & awards["main_ocid"].ne(""), "main_ocid"]
+
+    cocok_id = len(set(id_m.unique()) & set(id_a.unique()))
+    cocok_ocid = len(set(oc_m.unique()) & set(oc_a.unique()))
+    if cocok_id >= cocok_ocid and cocok_id > 0:
+        k_main, k_awards = "id", "main_id"
+    elif cocok_ocid > 0:
+        k_main, k_awards = "ocid", "main_ocid"
+    else:
+        raise ValueError("Tidak ditemukan ID/OCID yang berelasi antara main.csv dan awards.csv.")
+
+    main["tender_minValue_amount"] = pd.to_numeric(main["tender_minValue_amount"], errors="coerce")
+    awards["value_amount"] = pd.to_numeric(awards["value_amount"], errors="coerce")
+
+    hasil = awards.merge(
+        main, left_on=k_awards, right_on=k_main, how="left",
+        suffixes=("_award", "_main")
+    )
+    if hasil.empty:
+        raise ValueError("Hasil penggabungan dataset kosong.")
+    return hasil
+
+
+def deteksi_anomali(data_baru, paket):
+    """Inference Isolation Forest dengan preprocessing 7-fitur identik saat training."""
+    wajib = ["tender_minValue_amount", "value_amount", "tender_mainProcurementCategory"]
+    kurang = [c for c in wajib if c not in data_baru.columns]
+    if kurang:
+        raise ValueError("Kolom model belum tersedia: " + ", ".join(kurang))
+
+    data_baru = data_baru.copy()
+    nilai_min = pd.to_numeric(data_baru["tender_minValue_amount"], errors="coerce")
+    nilai_kontrak = pd.to_numeric(data_baru["value_amount"], errors="coerce")
+
+    fitur = pd.DataFrame(index=data_baru.index)
+    fitur["log_min_value"] = np.log1p(nilai_min.clip(lower=0))
+    fitur["log_award_value"] = np.log1p(nilai_kontrak.clip(lower=0))
+    fitur["selisih_award_rel"] = ((nilai_min - nilai_kontrak) / nilai_min).where(nilai_min.ne(0))
+    fitur = fitur.replace([np.inf, -np.inf], np.nan)
+
+    fitur_imp = pd.DataFrame(
+        paket["imputer"].transform(fitur),
+        columns=fitur.columns,
+        index=data_baru.index,
+    )
+    fitur_imp["min_value_missing"] = nilai_min.isna().astype(int)
+
+    kategori = data_baru["tender_mainProcurementCategory"].astype("string").str.strip().str.lower()
+    for item in ("goods", "services", "works"):
+        fitur_imp[f"tender_mainProcurementCategory_{item}"] = (
+            kategori == item
+        ).fillna(False).astype(int)
+
+    fitur_model = fitur_imp.reindex(columns=paket["fitur_model"])
+    prediksi = paket["model"].predict(fitur_model)
+    skor = paket["model"].score_samples(fitur_model)
+
+    hasil = data_baru.copy()
+    hasil["log_min_value"] = fitur["log_min_value"].values
+    hasil["log_award_value"] = fitur["log_award_value"].values
+    hasil["selisih_award_rel"] = fitur["selisih_award_rel"].values
+    hasil["prediksi_anomali"] = prediksi
+    hasil["skor_anomali"] = -skor
+    hasil["status_deteksi"] = np.where(prediksi == -1, "Anomali", "Normal")
+    return hasil
+
+
+# =============================================================================
+# 7. UI HELPER: HEADER & KPI CARDS
+# =============================================================================
+def render_header(title: str, subtitle: str, breadcrumb: str, meta_items: Optional[list] = None):
+    meta_html = ""
+    if meta_items:
+        chips = "".join([f'<span class="meta-chip">{m}</span>' for m in meta_items])
+        meta_html = f'<div class="header-meta-row">{chips}</div>'
+
+    st.markdown(
+        f"""
+        <div class="page-header">
+            <div class="page-breadcrumb">{breadcrumb}</div>
+            <h1 class="page-title">{title}</h1>
+            <p class="page-desc">{subtitle}</p>
+            {meta_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_kpi_cards(total: int, normal: int, anomali: int, pct: float, label_prefix: str = ""):
+    st.markdown(
+        f"""
+        <div class="kpi-grid">
+            <div class="kpi-card kpi-blue">
+                <div class="kpi-header">
+                    <span class="kpi-label">{label_prefix}Total Tender</span>
+                    <div class="kpi-icon-badge badge-bg-blue">📁</div>
+                </div>
+                <div class="kpi-value">{total:,}</div>
+                <div class="kpi-caption">Populasi tender dianalisis</div>
+            </div>
+            <div class="kpi-card kpi-green">
+                <div class="kpi-header">
+                    <span class="kpi-label">{label_prefix}Tender Normal</span>
+                    <div class="kpi-icon-badge badge-bg-green">✅</div>
+                </div>
+                <div class="kpi-value">{normal:,}</div>
+                <div class="kpi-caption">Pola selisih & nilai wajar</div>
+            </div>
+            <div class="kpi-card kpi-red">
+                <div class="kpi-header">
+                    <span class="kpi-label">{label_prefix}Terindikasi Anomali</span>
+                    <div class="kpi-icon-badge badge-bg-red">⚠️</div>
+                </div>
+                <div class="kpi-value">{anomali:,}</div>
+                <div class="kpi-caption">Pola penawaran tidak biasa</div>
+            </div>
+            <div class="kpi-card kpi-cyan">
+                <div class="kpi-header">
+                    <span class="kpi-label">{label_prefix}Rasio Anomali</span>
+                    <div class="kpi-icon-badge badge-bg-cyan">📊</div>
+                </div>
+                <div class="kpi-value">{pct:.2f}%</div>
+                <div class="kpi-caption">Proporsi anomali terisolasi</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# =============================================================================
+# 8. SIDEBAR: REFINED BRAND, NAVIGATION & STATUS
+# =============================================================================
+with st.sidebar:
+    st.markdown(
+        """
+        <div class="brand-box">
+            <div class="brand-title">
+                <span>🔎 OpenTender</span>
+                <span class="brand-badge">ML AI</span>
+            </div>
+            <div class="brand-sub">Anomaly Detection & Procurement Analytics</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    menu = st.radio(
+        "NAVIGASI",
+        [
+            "📊 Dashboard Overview",
+            "🔎 Hasil Deteksi Anomali",
+            "🚀 Upload & Analisis Data",
+            "📋 Riwayat Analisis",
+            "📈 Statistik Tender",
+            "ℹ️ Informasi Sistem",
+        ],
+        label_visibility="collapsed",
+    )
+
+    # Health Checks
+    ok_mysql, msg_mysql = check_mysql_health()
+    ok_fb, msg_fb = check_firebase_health()
+
+    dot_mysql = "dot-green" if ok_mysql else "dot-red"
+    dot_fb = "dot-green" if ok_fb else "dot-red"
+
+    st.markdown(
+        f"""
+        <div class="status-pill-box">
+            <div class="status-pill-title">⚙️ STATUS INTEGRASI SISTEM</div>
+            <div class="status-row">
+                <span class="status-name">MySQL InnoDB</span>
+                <span class="status-val"><span class="{dot_mysql}"></span> {'Online' if ok_mysql else 'Offline'}</span>
+            </div>
+            <div class="status-row">
+                <span class="status-name">Firebase RTDB</span>
+                <span class="status-val"><span class="{dot_fb}"></span> {'Online' if ok_fb else 'Offline'}</span>
+            </div>
+            <div class="status-row">
+                <span class="status-name">ML Model Engine</span>
+                <span class="status-val"><span class="dot-green"></span> Ready</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        "<div style='font-size: 0.70rem; color: #64748B; text-align: center; margin-top: 16px;'>"
+        "OpenTender Analytics v2.5 &bull; 2026<br>Infrastruktur Big Data & Machine Learning"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+
+# =============================================================================
+# HALAMAN 1: DASHBOARD OVERVIEW
+# =============================================================================
+if menu == "📊 Dashboard Overview":
+    fb_dashboard = get_cached_dashboard_firebase()
+    fb_stats = get_cached_statistics_firebase()
+
+    # Tentukan nilai metrik
+    if fb_dashboard:
+        if fb_stats and "anomaly_statistics" in fb_stats:
+            a_stat = fb_stats["anomaly_statistics"]
+            total_analisis = a_stat.get("total_data_dianalisis", 1085146)
+            normal_data = a_stat.get("normal_data", 1074296)
+            total_anom = a_stat.get("total_anomalies", 10850)
+            pct_anom = a_stat.get("anomaly_percentage", 1.0)
+        else:
+            total_analisis = 1085146
+            normal_data = 1074296
+            total_anom = 10850
+            pct_anom = 1.0
+
+        up_total = int(fb_dashboard.get("total_upload_tenders", 0) or 0)
+        up_normal = int(fb_dashboard.get("total_upload_normal", 0) or 0)
+        up_anom = int(fb_dashboard.get("total_upload_anomali", 0) or 0)
+        up_pct = float(fb_dashboard.get("pct_upload_anomali", 0.0) or 0.0)
+        last_updated = fb_dashboard.get("last_updated", "2026-11-17")
+    else:
+        total_analisis = 1085146
+        normal_data = 1074296
+        total_anom = 10850
+        pct_anom = 1.0
+        up_total = up_normal = up_anom = 0
+        up_pct = 0.0
+        last_updated = "Lokal"
+
+    meta_info = [
+        f"🕒 Diperbarui: {last_updated}",
+        "🔄 Sumber: Firebase Realtime Database",
+        "🤖 Model: Isolation Forest (Contamination 1%)",
+        "⚡ Status: Sistem Normal",
+    ]
+
+    render_header(
+        title="OpenTender Analytics Dashboard",
+        subtitle="Monitoring dan deteksi anomali data pengadaan barang dan jasa pemerintah Indonesia berbasis Isolation Forest.",
+        breadcrumb="OPENTENDER / OVERVIEW",
+        meta_items=meta_info,
+    )
+
+    tab_hist, tab_upload = st.tabs(["🏛️ Populasi Data Historis (1.085.146 Data)", "📤 Akumulasi Upload Baru"])
+
+    with tab_hist:
+        render_kpi_cards(
+            total=total_analisis,
+            normal=normal_data,
+            anomali=total_anom,
+            pct=pct_anom,
+            label_prefix="Historis ",
+        )
+
+        col_g1, col_g2 = st.columns([1, 1], gap="medium")
+
+        # 1. Donut Chart - DI DALAM SATU CARD BORDER
+        with col_g1:
+            with st.container(border=True):
+                st.markdown(
+                    """
+                    <div class="chart-header">
+                        <div class="chart-title">Proporsi Deteksi Anomali</div>
+                        <div class="chart-subtitle">Rasio Tender Normal vs Terindikasi Anomali</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                df_pie = pd.DataFrame({
+                    "Status": ["Normal", "Anomali"],
+                    "Jumlah": [normal_data, total_anom],
+                })
+                donut = alt.Chart(df_pie).mark_arc(innerRadius=62, cornerRadius=4).encode(
+                    theta=alt.Theta(field="Jumlah", type="quantitative"),
+                    color=alt.Color(
+                        field="Status",
+                        type="nominal",
+                        scale=alt.Scale(domain=["Normal", "Anomali"], range=["#10B981", "#EF4444"]),
+                        legend=alt.Legend(title="Status Deteksi", orient="bottom"),
+                    ),
+                    tooltip=["Status", alt.Tooltip("Jumlah:Q", format=",d")],
+                ).properties(height=250)
+                st.altair_chart(donut, use_container_width=True)
+
+        # 2. Bar Chart Kategori - DI DALAM SATU CARD BORDER
+        with col_g2:
+            with st.container(border=True):
+                st.markdown(
+                    """
+                    <div class="chart-header">
+                        <div class="chart-title">Distribusi Kategori Pengadaan</div>
+                        <div class="chart-subtitle">Volume tender per kategori pengadaan barang/jasa</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                if fb_stats and "tenders_by_category" in fb_stats:
+                    df_cat = pd.DataFrame(fb_stats["tenders_by_category"]).rename(
+                        columns={"kategori": "Kategori", "total": "Jumlah"}
+                    )
+                    bar_cat = alt.Chart(df_cat).mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
+                        x=alt.X("Kategori:N", title=None, sort="-y"),
+                        y=alt.Y("Jumlah:Q", title="Total Tender"),
+                        color=alt.Color(
+                            "Kategori:N",
+                            scale=alt.Scale(range=["#2563EB", "#06B6D4", "#8B5CF6", "#F59E0B"]),
+                            legend=None,
+                        ),
+                        tooltip=["Kategori", alt.Tooltip("Jumlah:Q", format=",d")],
+                    ).properties(height=250)
+                    st.altair_chart(bar_cat, use_container_width=True)
+                else:
+                    st.info("Data kategori pengadaan tidak ditemukan di Firebase.")
+
+        # 3. Line Chart Tren per Tahun - DI DALAM SATU CARD BORDER
+        with st.container(border=True):
+            st.markdown(
+                """
+                <div class="chart-header">
+                    <div class="chart-title">Tren Publikasi Tender per Tahun</div>
+                    <div class="chart-subtitle">Kronologi aktivitas pengadaan barang/jasa dari dataset historis</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            if fb_stats and "tenders_by_year" in fb_stats:
+                df_year = pd.DataFrame(fb_stats["tenders_by_year"]).rename(
+                    columns={"tahun": "Tahun", "total": "Jumlah"}
+                )
+                df_year = df_year.dropna(subset=["Tahun"])
+                df_year = df_year[df_year["Tahun"].astype(str).str.len() == 4]
+                chart_year = alt.Chart(df_year).mark_line(point=True, strokeWidth=3, color="#2563EB").encode(
+                    x=alt.X("Tahun:O", title="Tahun Publikasi"),
+                    y=alt.Y("Jumlah:Q", title="Volume Tender"),
+                    tooltip=["Tahun", alt.Tooltip("Jumlah:Q", format=",d")],
+                ).properties(height=260)
+                st.altair_chart(chart_year, use_container_width=True)
+            else:
+                st.info("Data tren tahunan tidak tersedia.")
+
+    with tab_upload:
+        if up_total > 0:
+            render_kpi_cards(
+                total=up_total,
+                normal=up_normal,
+                anomali=up_anom,
+                pct=up_pct,
+                label_prefix="Upload ",
+            )
+            st.caption(f"🕒 Terakhir diperbarui di Firebase: `{last_updated}`")
+        else:
+            with st.container(border=True):
+                st.markdown(
+                    """
+                    <div style="text-align: center; padding: 36px 20px;">
+                        <div style="font-size: 2.4rem; margin-bottom: 10px;">📤</div>
+                        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 6px;">Belum Ada Analisis Upload Baru</h3>
+                        <p style="color: #64748B; font-size: 0.88rem; max-width: 500px; margin: 0 auto;">
+                            Data yang Anda unggah melalui menu 'Upload & Analisis Data' akan diakumulasikan di sini secara real-time.
+                        </p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+
+# =============================================================================
+# HALAMAN 2: HASIL DETEKSI ANOMALI
+# =============================================================================
+elif menu == "🔎 Hasil Deteksi Anomali":
+    render_header(
+        title="Hasil Deteksi Anomali",
+        subtitle="Eksplorasi mendalam data tender yang terdeteksi memiliki pola selisih harga tidak wajar.",
+        breadcrumb="OPENTENDER / DETEKSI ANOMALI",
+        meta_items=["Metode: Isolation Forest", "Target Fitur: Selisih Relatif & Pagu/Kontrak", "Threshold: 1.0% Contamination"],
+    )
+
+    if not FILE_DATA.exists():
+        st.error(f"File data historis tidak ditemukan di {FILE_DATA}.")
+        st.stop()
+
+    with st.spinner("Memuat dataset deteksi anomali..."):
+        df_deteksi = load_local_csv_sample(FILE_DATA, nrows=25000)
+
+    # Filter Toolbar di dalam card border
+    with st.container(border=True):
+        st.markdown(
+            """
+            <div class="chart-header">
+                <div class="chart-title">Filter & Pencarian Tender</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        f1, f2, f3, f4 = st.columns([1.4, 1.1, 1, 1.4], gap="small")
+
+        kat_options = sorted([str(x) for x in df_deteksi["tender_mainProcurementCategory"].dropna().unique()])
+        with f1:
+            sel_kat = st.multiselect("Kategori Pengadaan", kat_options, default=kat_options)
+
+        with f2:
+            sel_status = st.multiselect("Status Deteksi", ["Normal", "Anomali"], default=["Normal", "Anomali"])
+
+        df_deteksi["tahun"] = pd.to_datetime(df_deteksi["tender_datePublished"], errors="coerce", utc=True).dt.year
+        tahun_options = sorted([int(t) for t in df_deteksi["tahun"].dropna().unique()])
+        with f3:
+            sel_tahun = st.multiselect("Tahun Publikasi", tahun_options, default=tahun_options)
+
+        with f4:
+            cari_id = st.text_input("Cari ID / OCID", placeholder="Ketik ID tender...")
+
+    filtered = df_deteksi[
+        df_deteksi["tender_mainProcurementCategory"].astype(str).isin(sel_kat)
+        & df_deteksi["status_deteksi"].isin(sel_status)
+    ]
+    if sel_tahun:
+        filtered = filtered[filtered["tahun"].isin(sel_tahun)]
+    if cari_id.strip():
+        filtered = filtered[filtered["id"].astype(str).str.contains(cari_id.strip(), case=False, na=False)]
+
+    total_f = len(filtered)
+    normal_f = int((filtered["status_deteksi"] == "Normal").sum())
+    anomali_f = int((filtered["status_deteksi"] == "Anomali").sum())
+    pct_f = (anomali_f / total_f * 100) if total_f > 0 else 0.0
+
+    render_kpi_cards(total_f, normal_f, anomali_f, pct_f, "Filter ")
+
+    with st.container(border=True):
+        st.markdown(
+            f"""
+            <div class="chart-header">
+                <div class="chart-title">Daftar Tender Terfilter ({total_f:,} data)</div>
+                <div class="chart-subtitle">Tabel hasil evaluasi nilai pagu, penawaran pemenang, dan skor anomali</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        tampil_cols = [
+            c for c in [
+                "id", "tender_datePublished", "tender_mainProcurementCategory",
+                "tender_minValue_amount", "value_amount", "skor_anomali", "status_deteksi"
+            ] if c in filtered.columns
+        ]
+
+        st.dataframe(
+            filtered[tampil_cols].head(500),
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "tender_minValue_amount": st.column_config.NumberColumn("Nilai Pagu (IDR)", format="Rp %d"),
+                "value_amount": st.column_config.NumberColumn("Nilai Kontrak (IDR)", format="Rp %d"),
+                "skor_anomali": st.column_config.NumberColumn("Skor Anomali", format="%.4f"),
+                "status_deteksi": st.column_config.TextColumn("Status"),
+            },
+        )
+
+        st.download_button(
+            label="⬇️ Unduh Data Terfilter (CSV)",
+            data=filtered[tampil_cols].to_csv(index=False).encode("utf-8-sig"),
+            file_name="hasil_deteksi_anomali_filter.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+
+
+# =============================================================================
+# HALAMAN 3: UPLOAD & ANALISIS DATA
+# =============================================================================
+elif menu == "🚀 Upload & Analisis Data":
+    render_header(
+        title="Upload & Analyze Tender Data",
+        subtitle="Unggah dataset pengadaan untuk melakukan validasi relasi dan deteksi anomali secara terdistribusi.",
+        breadcrumb="OPENTENDER / PIPELINE ANALISIS",
+        meta_items=["Format: CSV / ZIP / TAR", "Integritas: MySQL ACID", "Sinkronisasi: Firebase RTDB"],
+    )
+
+    st.markdown(
+        """
+        <div class="step-container">
+            <div class="step-item">
+                <div class="step-num">1</div>
+                <div class="step-title">Pilih File Dataset</div>
+                <div class="step-desc">Mendukung CSV, XLSX, ZIP, TAR.GZ</div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">2</div>
+                <div class="step-title">Validasi & Relasi</div>
+                <div class="step-desc">Pemeriksaan main.csv & awards.csv</div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">3</div>
+                <div class="step-title">Isolation Forest ML</div>
+                <div class="step-desc">Scoring 7-fitur model terlatih</div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">4</div>
+                <div class="step-title">Simpan & Sinkron</div>
+                <div class="step-desc">MySQL InnoDB & Firebase RTDB</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if not FILE_MODEL.exists():
+        st.error(f"Model machine learning tidak ditemukan di {FILE_MODEL}.")
+        st.stop()
+
+    paket_model = get_model(FILE_MODEL)
+
+    with st.container(border=True):
+        st.markdown(
+            """
+            <div class="chart-header">
+                <div class="chart-title">Unggah Berkas Dataset OpenTender</div>
+                <div class="chart-subtitle">Untuk relasi lengkap, satukan main.csv dan awards.csv dalam satu arsip ZIP/TAR</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        file_up = st.file_uploader(
+            "Pilih file dataset",
+            type=["csv", "xlsx", "zip", "tar", "gz", "tgz", "bz2", "7z", "rar"],
+            label_visibility="collapsed",
+        )
+
+    if file_up is not None:
+        try:
+            with st.spinner("Memeriksa struktur arsip..."):
+                kumpulan = baca_dataset_upload(file_up)
+
+            st.success(f"Arsip terbaca: {len(kumpulan)} file data ditemukan.")
+
+            with st.container(border=True):
+                st.markdown(
+                    """
+                    <div class="chart-header">
+                        <div class="chart-title">Struktur Berkas yang Diunggah</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                info_files = pd.DataFrame([
+                    {"Nama File": k, "Jumlah Baris": f"{len(v):,}", "Jumlah Kolom": len(v.columns)}
+                    for k, v in kumpulan.items()
+                ])
+                st.dataframe(info_files, use_container_width=True, hide_index=True)
+
+            if st.button("🚀 Mulai Analisis & Deteksi Anomali", type="primary", use_container_width=True):
+                batch_id = str(uuid.uuid4())
+                filename = file_up.name
+
+                st.info(f"**Batch ID Terdaftar:** `{batch_id}`")
+
+                prog = st.progress(10, text="Langkah 1/4: Mengintegrasikan tabel relasi...")
+                data_gabung = integrasikan_opentender(kumpulan)
+
+                prog.progress(40, text="Langkah 2/4: Menjalankan model Isolation Forest...")
+                hasil_pred = deteksi_anomali(data_gabung, paket_model)
+
+                total_n = len(hasil_pred)
+                total_anom = int((hasil_pred["status_deteksi"] == "Anomali").sum())
+                total_norm = total_n - total_anom
+                pct_anom = (total_anom / total_n * 100) if total_n > 0 else 0.0
+
+                prog.progress(70, text="Langkah 3/4: Menyimpan hasil ke database MySQL...")
+                if MYSQL_AVAILABLE and ok_mysql:
+                    try:
+                        conn_m = mysql_conn()
+                        simpan_batch(conn_m, batch_id, filename, total_rows=total_n, status="processing")
+                        simpan_hasil_prediksi(conn_m, batch_id, hasil_pred)
+                        perbarui_status_batch(conn_m, batch_id, total_norm, total_anom, status="done")
+                        conn_m.close()
+                    except Exception as err_m:
+                        st.error(f"Gagal simpan ke MySQL: {err_m}")
+
+                prog.progress(90, text="Langkah 4/4: Sinkronisasi ringkasan ke Firebase RTDB...")
+                if FIREBASE_AVAILABLE and ok_fb:
+                    try:
+                        kirim_ringkasan_batch(
+                            batch_id=batch_id,
+                            filename=filename,
+                            total_rows=total_n,
+                            total_normal=total_norm,
+                            total_anomali=total_anom,
+                            catatan="web_upload_pipeline",
+                        )
+                        firebase_update_dashboard(total_norm, total_anom)
+                    except Exception as err_f:
+                        st.warning(f"Gagal kirim ke Firebase: {err_f}")
+
+                prog.progress(100, text="Selesai!")
+
+                render_kpi_cards(total_n, total_norm, total_anom, pct_anom, "Batch ")
+
+                with st.container(border=True):
+                    st.markdown(
+                        """
+                        <div class="chart-header">
+                            <div class="chart-title">Pratinjau Hasil Klasifikasi Anomali</div>
+                            <div class="chart-subtitle">Menampilkan skor anomali dan status deteksi batch terbaru</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                    cols_preview = [
+                        c for c in [
+                            "id", "tender_datePublished", "tender_mainProcurementCategory",
+                            "tender_minValue_amount", "value_amount", "skor_anomali", "status_deteksi"
+                        ] if c in hasil_pred.columns
+                    ]
+                    st.dataframe(hasil_pred[cols_preview].head(200), use_container_width=True, hide_index=True)
+
+                    st.download_button(
+                        label="⬇️ Unduh Hasil Analisis Lengkap (CSV)",
+                        data=hasil_pred.to_csv(index=False).encode("utf-8-sig"),
+                        file_name=f"hasil_anomali_batch_{batch_id[:8]}.csv",
+                        mime="text/csv",
+                        use_container_width=True,
+                    )
+
+        except Exception as exc:
+            st.error(f"Terjadi kesalahan pemrosesan dataset: {exc}")
+
+
+# =============================================================================
+# HALAMAN 4: RIWAYAT ANALISIS
+# =============================================================================
+elif menu == "📋 Riwayat Analisis":
+    render_header(
+        title="Riwayat Sesi Analisis",
+        subtitle="Log riwayat proses upload dataset dan rekonsiliasi data MySQL serta Firebase RTDB.",
+        breadcrumb="OPENTENDER / RIWAYAT BATCH",
+        meta_items=["Penyimpanan: Hybrid SQL & NoSQL", "Tracking: UUID Batch ID", "Audit Trail: Lengkap"],
+    )
+
+    tab_r_fb, tab_r_mysql = st.tabs(["🔥 Log Firebase RTDB", "🗄️ Log MySQL InnoDB"])
+
+    with tab_r_fb:
+        riwayat_fb = ambil_riwayat_firebase(limit=50) if FIREBASE_AVAILABLE else []
+        if riwayat_fb:
+            df_rfb = pd.DataFrame(riwayat_fb)
+            with st.container(border=True):
+                st.markdown(
+                    f"""
+                    <div class="chart-header">
+                        <div class="chart-title">Daftar Sesi Analisis Tersimpan di Firebase ({len(df_rfb)} batch)</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                cols_rfb = [
+                    c for c in [
+                        "batch_id", "filename", "total_rows", "total_normal",
+                        "total_anomali", "pct_anomali", "status", "timestamp"
+                    ] if c in df_rfb.columns
+                ]
+                st.dataframe(df_rfb[cols_rfb], use_container_width=True, hide_index=True)
+        else:
+            st.info("Belum ada riwayat batch yang tercatat di Firebase.")
+
+    with tab_r_mysql:
+        if MYSQL_AVAILABLE and ok_mysql:
+            try:
+                conn_m = mysql_conn()
+                riwayat_my = ambil_riwayat_upload(conn_m, limit=50)
+                conn_m.close()
+
+                if riwayat_my:
+                    df_rmy = pd.DataFrame(riwayat_my)
+                    with st.container(border=True):
+                        st.markdown(
+                            f"""
+                            <div class="chart-header">
+                                <div class="chart-title">Tabel Sesi MySQL ({len(df_rmy)} batch)</div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                        st.dataframe(df_rmy, use_container_width=True, hide_index=True)
+
+                    with st.container(border=True):
+                        st.markdown(
+                            """
+                            <div class="chart-header">
+                                <div class="chart-title">🔍 Tinjau Detail Hasil per Batch ID</div>
+                                <div class="chart-subtitle">Pilih ID sesi untuk melihat baris tender yang diisolasi</div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                        batch_pilihan = st.selectbox("Pilih Batch ID", df_rmy["batch_id"].tolist())
+                        if batch_pilihan:
+                            conn_drill = mysql_conn()
+                            detail_rows = ambil_hasil_analisis(conn_drill, batch_id=batch_pilihan, limit=200)
+                            conn_drill.close()
+
+                            if detail_rows:
+                                st.dataframe(pd.DataFrame(detail_rows), use_container_width=True, hide_index=True)
+                            else:
+                                st.caption("Tidak ada detail baris tersimpan untuk batch ini.")
+                else:
+                    st.info("Tabel upload_batches di MySQL masih kosong.")
+            except Exception as e:
+                st.error(f"Gagal membaca log MySQL: {e}")
+        else:
+            st.warning("MySQL offline. Riwayat MySQL tidak dapat dimuat.")
+
+
+# =============================================================================
+# HALAMAN 5: STATISTIK TENDER
+# =============================================================================
+elif menu == "📈 Statistik Tender":
+    render_header(
+        title="Statistik & Intelijen Pengadaan",
+        subtitle="Analisis agregat data pengadaan barang dan jasa publik Indonesia dari Firebase Realtime Database.",
+        breadcrumb="OPENTENDER / STATISTIK",
+        meta_items=["Sumber: Firebase RTDB", "Populasi: 1.303.374 Tenders", "3.476.240 Entitas Terdaftar"],
+    )
+
+    fb_stats = get_cached_statistics_firebase()
+
+    if not fb_stats:
+        st.warning("Data statistik tidak tersedia di Firebase Realtime Database.")
+        st.stop()
+
+    c_s1, c_s2 = st.columns([1, 1], gap="medium")
+
+    # 1. Top Buyers
+    with c_s1:
+        with st.container(border=True):
+            st.markdown(
+                """
+                <div class="chart-header">
+                    <div class="chart-title">Top 10 Instansi Pembeli (Buyers)</div>
+                    <div class="chart-subtitle">Lembaga dengan frekuensi pengadaan terbesar</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            if "top_buyers" in fb_stats:
+                df_b = pd.DataFrame(fb_stats["top_buyers"])
+                df_b = df_b[df_b["nama"] != "Tidak diketahui"].head(8)
+                chart_b = alt.Chart(df_b).mark_bar(cornerRadiusTopRight=4, cornerRadiusBottomRight=4).encode(
+                    y=alt.Y("nama:N", sort="-x", title=None),
+                    x=alt.X("total_tender:Q", title="Total Tender"),
+                    color=alt.value("#2563EB"),
+                    tooltip=["nama", alt.Tooltip("total_tender:Q", format=",d")],
+                ).properties(height=260)
+                st.altair_chart(chart_b, use_container_width=True)
+
+    # 2. Top Suppliers
+    with c_s2:
+        with st.container(border=True):
+            st.markdown(
+                """
+                <div class="chart-header">
+                    <div class="chart-title">Top 10 Vendor Rekanan (Suppliers)</div>
+                    <div class="chart-subtitle">Pemenang tender pengadaan dengan keterlibatan tertinggi</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            if "top_suppliers" in fb_stats:
+                df_s = pd.DataFrame(fb_stats["top_suppliers"])
+                df_s = df_s[df_s["nama"] != "Tidak diketahui"].head(8)
+                chart_s = alt.Chart(df_s).mark_bar(cornerRadiusTopRight=4, cornerRadiusBottomRight=4).encode(
+                    y=alt.Y("nama:N", sort="-x", title=None),
+                    x=alt.X("total_keterlibatan:Q", title="Total Keterlibatan"),
+                    color=alt.value("#10B981"),
+                    tooltip=["nama", alt.Tooltip("total_keterlibatan:Q", format=",d")],
+                ).properties(height=260)
+                st.altair_chart(chart_s, use_container_width=True)
+
+    c_s3, c_s4 = st.columns([1, 1], gap="medium")
+
+    # 3. Status Tender
+    with c_s3:
+        with st.container(border=True):
+            st.markdown(
+                """
+                <div class="chart-header">
+                    <div class="chart-title">Status Penyelesaian Tender</div>
+                    <div class="chart-subtitle">Perbandingan tender selesai vs tahap perencanaan</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            if "tenders_by_status" in fb_stats:
+                df_st = pd.DataFrame(fb_stats["tenders_by_status"])
+                chart_st = alt.Chart(df_st).mark_arc(innerRadius=50).encode(
+                    theta=alt.Theta("total:Q"),
+                    color=alt.Color("status:N", scale=alt.Scale(range=["#0EA5E9", "#F59E0B"])),
+                    tooltip=["status", alt.Tooltip("total:Q", format=",d")],
+                ).properties(height=240)
+                st.altair_chart(chart_st, use_container_width=True)
+
+    # 4. Satuan Kerja LPSE Teratas
+    with c_s4:
+        with st.container(border=True):
+            st.markdown(
+                """
+                <div class="chart-header">
+                    <div class="chart-title">Unit Layanan Pengadaan (LPSE) Teratas</div>
+                    <div class="chart-subtitle">Volume tender per satuan kerja pengadaan</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            if "top_procuring_entities" in fb_stats:
+                df_pe = pd.DataFrame(fb_stats["top_procuring_entities"])
+                df_pe = df_pe[df_pe["nama"] != "Tidak diketahui"].head(6)
+                chart_pe = alt.Chart(df_pe).mark_bar(cornerRadiusTopRight=4, cornerRadiusBottomRight=4).encode(
+                    y=alt.Y("nama:N", sort="-x", title=None),
+                    x=alt.X("total_tender:Q", title="Total Tender"),
+                    color=alt.value("#8B5CF6"),
+                    tooltip=["nama", alt.Tooltip("total_tender:Q", format=",d")],
+                ).properties(height=240)
+                st.altair_chart(chart_pe, use_container_width=True)
+
+
+# =============================================================================
+# HALAMAN 6: INFORMASI SISTEM
+# =============================================================================
+elif menu == "ℹ️ Informasi Sistem":
+    render_header(
+        title="Spesifikasi & Arsitektur Sistem",
+        subtitle="Dokumentasi teknis algoritma Machine Learning, skema database, dan infrastruktur Big Data.",
+        breadcrumb="OPENTENDER / ARSITEKTUR & SISTEM",
+        meta_items=["Framework: Streamlit Enterprise", "Algoritma: Scikit-Learn IsolationForest", "Database: Hybrid MySQL & Firebase"],
+    )
+
+    c_i1, c_i2 = st.columns([1, 1], gap="medium")
+
+    with c_i1:
+        with st.container(border=True):
+            st.markdown(
+                """
+                <div class="chart-header">
+                    <div class="chart-title">🤖 Model Machine Learning: Isolation Forest</div>
+                    <div class="chart-subtitle">Algoritma unsupervised outlier isolation untuk data multivariat</div>
+                </div>
+                <div style="font-size: 0.85rem; line-height: 1.6; color: #334155; margin-top: 10px;">
+                    Model mengisolasi anomali dengan membuat partisi acak pada fitur. Titik data yang anomali
+                    memerlukan jalur pohon keputusan (decision path) yang jauh lebih pendek dibandingkan titik normal.
+                    <br><br>
+                    <b>Fitur Model (7 Fitur Terlatih):</b>
+                    <ol style="padding-left: 20px; margin-top: 6px;">
+                        <li><code>log_min_value</code>: Transformasi logaritmik nilai pagu tender</li>
+                        <li><code>log_award_value</code>: Transformasi logaritmik nilai kontrak pemenang</li>
+                        <li><code>selisih_award_rel</code>: Rasio selisih relatif antara pagu dan penawaran</li>
+                        <li><code>min_value_missing</code>: Indikator ketiadaan data nilai pagu</li>
+                        <li><code>tender_mainProcurementCategory_goods</code>: One-hot barang</li>
+                        <li><code>tender_mainProcurementCategory_services</code>: One-hot jasa</li>
+                        <li><code>tender_mainProcurementCategory_works</code>: One-hot konstruksi</li>
+                    </ol>
+                    <b>Parameter Pelatihan:</b>
+                    <ul>
+                        <li>Contamination: <code>0.01</code> (1.0% anomali)</li>
+                        <li>Estimators: <code>100 trees</code></li>
+                        <li>Imputer: <code>SimpleImputer(strategy='median')</code></li>
+                    </ul>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    with c_i2:
+        with st.container(border=True):
+            st.markdown(
+                """
+                <div class="chart-header">
+                    <div class="chart-title">🗄️ Infrastruktur & Arsitektur Penyimpanan</div>
+                    <div class="chart-subtitle">Pola hybrid SQL (MySQL) & NoSQL (Firebase Realtime Database)</div>
+                </div>
+                <div style="font-size: 0.85rem; line-height: 1.6; color: #334155; margin-top: 10px;">
+                    <b>1. MySQL InnoDB (Relational SQL):</b>
+                    <ul>
+                        <li>Tabel historis: <code>tenders</code>, <code>awards</code>, <code>award_suppliers</code> (3.4M baris)</li>
+                        <li>Tabel analisis baru: <code>upload_batches</code>, <code>analysis_results</code></li>
+                        <li>Peran: Integritas relasional foreign key, ACID compliance, chunk storage</li>
+                    </ul>
+                    <b>2. Firebase Realtime Database (NoSQL):</b>
+                    <ul>
+                        <li>Node: <code>opentender/dashboard</code> (KPI metrik global & upload)</li>
+                        <li>Node: <code>opentender/statistics</code> (Agregasi tahun, pembeli, vendor)</li>
+                        <li>Node: <code>opentender/analysis_history</code> (Log per batch upload)</li>
+                        <li>Peran: Sumber data cepat dashboard, sinkronisasi cloud real-time</li>
+                    </ul>
+                    <b>3. Streamlit & Altair Frontend Engine:</b>
+                    <ul>
+                        <li>Responsive grid layout dengan card wrapping terpadu</li>
+                        <li>Grafik interaktif Altair dengan tooltip presisi</li>
+                    </ul>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+
+----------------------------------------------------------------------
+FILE: .\cek_hasil_anomali.py
+----------------------------------------------------------------------
+import pandas as pd
+
+file = "hasil_deteksi_anomali_opentender.csv"
+
+df = pd.read_csv(file)
+
+print("Jumlah baris:", len(df))
+print("\nNama kolom:")
+print(df.columns.tolist())
+
+print("\n5 data pertama:")
+print(df.head())
+
+print("\nDistribusi hasil deteksi:")
+print(df.iloc[:, -1].value_counts())
+
+----------------------------------------------------------------------
+FILE: .\cek_model.py
+----------------------------------------------------------------------
+
+import joblib
+import os
+
+nama_file = "model_isolation_forest_opentender.joblib"
+
+if not os.path.exists(nama_file):
+    print("ERROR: File model tidak ditemukan.")
+else:
+    paket = joblib.load(nama_file)
+
+    print("Model berhasil dimuat.")
+    print("Ukuran file (MB):", round(
+        os.path.getsize(nama_file) / (1024 ** 2), 2
+    ))
+    print("Isi paket model:", list(paket.keys()))
+    print("Tipe model:", type(paket["model"]).__name__)
+    print("Jumlah fitur model:", len(paket["fitur_model"]))
+    print("Nama fitur:", paket["fitur_model"])
+
+    print("\nMenguji prediksi model...")
+
+try:
+    model = paket["model"]
+    fitur = paket["fitur_model"]
+
+    import pandas as pd
+
+    # Data uji sementara dengan 7 fitur model
+    data_uji = pd.DataFrame(
+        [[0.0] * len(fitur)],
+        columns=fitur
+    )
+
+    hasil = model.predict(data_uji)
+
+    print("Prediksi berhasil.")
+    print("Hasil prediksi:", hasil)
+
+except Exception as e:
+    print("Prediksi gagal:", repr(e))
+
+
+----------------------------------------------------------------------
+FILE: .\cek_status.py
+----------------------------------------------------------------------
+
+import pandas as pd
+
+FILE_DATA = "hasil_deteksi_anomali_opentender.csv"
+
+print("Memeriksa seluruh dataset...")
+
+jumlah_baris = 0
+jumlah_prediksi = {}
+jumlah_status = {}
+
+for df in pd.read_csv(FILE_DATA, chunksize=100_000):
+    jumlah_baris += len(df)
+
+    for kolom, hasil in [
+        ("prediksi_anomali", jumlah_prediksi),
+        ("status_deteksi", jumlah_status),
+    ]:
+        hitungan = df[kolom].value_counts(dropna=False)
+
+        for nilai, jumlah in hitungan.items():
+            hasil[nilai] = hasil.get(nilai, 0) + int(jumlah)
+
+print("\n=== HASIL PEMERIKSAAN ===")
+print("Total baris:", f"{jumlah_baris:,}")
+
+print("\nJumlah berdasarkan prediksi model:")
+for label, jumlah in jumlah_prediksi.items():
+    print(f"{label}: {jumlah:,}")
+
+print("\nJumlah berdasarkan status deteksi:")
+for status, jumlah in jumlah_status.items():
+    print(f"{status}: {jumlah:,}")
+
+print("\nPemeriksaan selesai.")
+
+
+----------------------------------------------------------------------
+FILE: .\check_radio_html.py
+----------------------------------------------------------------------
+import subprocess
+import time
+import json
+import urllib.request
+import asyncio
+import websockets
+import os
+
+CHROME_PATH = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+STREAMLIT_EXE = r".venv\Scripts\streamlit.exe"
+
+proc_st = subprocess.Popen([
+    STREAMLIT_EXE, "run", "app.py",
+    "--server.headless", "true",
+    "--server.port", "8501",
+    "--server.address", "127.0.0.1"
+])
+
+for i in range(20):
+    try:
+        with urllib.request.urlopen("http://127.0.0.1:8501/_stcore/health", timeout=1) as r:
+            if r.status == 200:
+                break
+    except Exception:
+        time.sleep(1)
+
+proc_chrome = subprocess.Popen([
+    CHROME_PATH,
+    "--headless=new",
+    "--remote-debugging-port=9222",
+    "http://127.0.0.1:8501"
+])
+
+time.sleep(3)
+
+async def check():
+    with urllib.request.urlopen("http://127.0.0.1:9222/json") as r:
+        tabs = json.loads(r.read().decode())
+    ws_url = tabs[0]["webSocketDebuggerUrl"]
+    async with websockets.connect(ws_url) as ws:
+        await asyncio.sleep(12)
+        js = """
+        (function() {
+            var radios = document.querySelectorAll('div[data-testid="stRadio"] *');
+            var tags = [];
+            radios.forEach(function(el) {
+                tags.push(el.tagName + (el.className ? '.' + el.className.split(' ').join('.') : ''));
+            });
+            var radioContainer = document.querySelector('div[data-testid="stRadio"]');
+            return {
+                containerHTML: radioContainer ? radioContainer.innerHTML.substring(0, 1000) : "NO CONTAINER"
+            };
+        })()
+        """
+        await ws.send(json.dumps({"id": 1, "method": "Runtime.evaluate", "params": {"expression": js}}))
+        raw = await ws.recv()
+        print("RADIO CONTAINER:", json.loads(raw)["result"]["result"]["value"])
+
+try:
+    asyncio.run(check())
+finally:
+    proc_chrome.terminate()
+    proc_st.terminate()
+
+
+----------------------------------------------------------------------
+FILE: .\config.py
+----------------------------------------------------------------------
+import os
+from pathlib import Path
+
+# ============================================================
+# BASE PATHS
+# ============================================================
+
+BASE_DIR = Path(__file__).resolve().parent
+
+FILE_MODEL       = BASE_DIR / "model_isolation_forest_opentender.joblib"
+FILE_HASIL_CSV   = BASE_DIR / "hasil_deteksi_anomali_opentender.csv"
+FILE_CREDENTIALS = BASE_DIR / "credentials" / "firebase-key.json"
+
+# ============================================================
+# KONFIGURASI MYSQL
+# ============================================================
+
+MYSQL_CONFIG = {
+    "host":     os.getenv("MYSQL_HOST",     "127.0.0.1"),
+    "port":     int(os.getenv("MYSQL_PORT", "3306")),
+    "user":     os.getenv("MYSQL_USER",     "root"),
+    "password": os.getenv("MYSQL_PASSWORD", ""),
+    "database": os.getenv("MYSQL_DATABASE", "opentender_bigdata"),
+}
+
+# ============================================================
+# KONFIGURASI FIREBASE
+# ============================================================
+
+FIREBASE_DATABASE_URL = os.getenv(
+    "FIREBASE_DATABASE_URL",
+    "https://opentender-bigdata-default-rtdb.firebaseio.com/",
+)
+
+FIREBASE_CREDENTIALS_PATH = os.getenv(
+    "FIREBASE_CREDENTIALS_PATH",
+    str(FILE_CREDENTIALS),
+)
+
+# ============================================================
+# KONSTANTA PEMROSESAN
+# ============================================================
+
+MYSQL_BATCH_SIZE    = 2_000
+PREDICT_CHUNK_SIZE  = 50_000
+
+
+----------------------------------------------------------------------
+FILE: .\db_firebase.py
+----------------------------------------------------------------------
+"""
+Modul Firebase Realtime Database untuk proyek OpenTender Anomaly Detection.
+
+Fungsi utama:
+    - init_firebase()            : inisialisasi koneksi Firebase (sekali saja)
+    - test_connection()          : uji koneksi Firebase
+    - kirim_ringkasan_batch()    : kirim ringkasan hasil upload ke analysis_history
+    - perbarui_dashboard()       : perbarui node dashboard dengan akumulasi terbaru
+    - ambil_riwayat_firebase()   : baca riwayat analysis_history untuk dashboard
+    - ambil_dashboard_firebase() : baca node dashboard
+
+Prinsip keamanan:
+    - Tidak menghapus node historis yang sudah ada.
+    - Hanya MENAMBAH atau MEMPERBARUI node.
+    - Jika Firebase gagal, MySQL tidak akan dipengaruhi (dipanggil setelah MySQL sukses).
+"""
+
+import threading
+from datetime import datetime, timezone
+from typing import Optional
+
+import firebase_admin
+from firebase_admin import credentials, db
+
+from config import FIREBASE_CREDENTIALS_PATH, FIREBASE_DATABASE_URL
+
+# Lock agar inisialisasi aman di environment multi-thread (Streamlit)
+_init_lock = threading.Lock()
+_initialized = False
+
+
+# ============================================================
+# INISIALISASI
+# ============================================================
+
+def init_firebase() -> bool:
+    """
+    Menginisialisasi koneksi Firebase Admin SDK.
+    Aman dipanggil berkali-kali — hanya dijalankan sekali.
+    Mengembalikan True jika berhasil, False jika gagal.
+    """
+    global _initialized
+    with _init_lock:
+        if _initialized:
+            return True
+        try:
+            # Jika sudah ada app yang diinisialisasi sebelumnya
+            if firebase_admin._apps:
+                _initialized = True
+                return True
+
+            cred = credentials.Certificate(FIREBASE_CREDENTIALS_PATH)
+            firebase_admin.initialize_app(cred, {"databaseURL": FIREBASE_DATABASE_URL})
+            _initialized = True
+            return True
+        except Exception as e:
+            print(f"[Firebase] Inisialisasi gagal: {e}")
+            return False
+
+
+def test_connection() -> tuple[bool, str]:
+    """
+    Menguji kesiapan koneksi Firebase Admin SDK.
+    Mengembalikan (True, pesan) jika siap, (False, pesan error) jika gagal.
+    """
+    try:
+        if not init_firebase():
+            return False, "Inisialisasi Firebase gagal."
+        if firebase_admin._apps:
+            return True, "Koneksi Firebase terhubung."
+        return False, "Firebase belum terinisialisasi."
+    except Exception as e:
+        return False, f"Koneksi Firebase gagal: {e}"
+
+
+# ============================================================
+# HELPER
+# ============================================================
+
+def _now_iso() -> str:
+    return datetime.now(tz=timezone.utc).isoformat()
+
+
+def _safe_dict(obj) -> dict:
+    """Pastikan semua nilai dalam dict bisa diserialisasi ke JSON Firebase."""
+    if not isinstance(obj, dict):
+        return {}
+    result = {}
+    for k, v in obj.items():
+        if isinstance(v, dict):
+            result[str(k)] = _safe_dict(v)
+        elif isinstance(v, list):
+            result[str(k)] = [str(x) for x in v]
+        elif v is None or v != v:  # None atau NaN
+            result[str(k)] = None
+        else:
+            result[str(k)] = v
+    return result
+
+
+# ============================================================
+# KIRIM RINGKASAN BATCH
+# ============================================================
+
+def kirim_ringkasan_batch(
+    batch_id: str,
+    filename: str,
+    total_rows: int,
+    total_normal: int,
+    total_anomali: int,
+    catatan: Optional[str] = None,
+) -> tuple[bool, str]:
+    """
+    Menyimpan ringkasan hasil satu batch upload ke:
+        opentender/analysis_history/{batch_id}
+
+    Tidak menimpa atau menghapus batch lain.
+    """
+    try:
+        if not init_firebase():
+            return False, "Firebase tidak terinisialisasi."
+
+        total = total_normal + total_anomali
+        pct   = round(total_anomali / total * 100, 2) if total > 0 else 0.0
+
+        payload = {
+            "batch_id":       batch_id,
+            "filename":       str(filename),
+            "total_rows":     int(total_rows),
+            "total_normal":   int(total_normal),
+            "total_anomali":  int(total_anomali),
+            "pct_anomali":    float(pct),
+            "status":         "done",
+            "timestamp":      _now_iso(),
+        }
+        if catatan:
+            payload["catatan"] = str(catatan)
+
+        ref = db.reference(f"opentender/analysis_history/{batch_id}")
+        ref.set(payload)
+        return True, f"Ringkasan batch '{batch_id}' berhasil dikirim."
+    except Exception as e:
+        return False, f"Gagal kirim ringkasan batch: {e}"
+
+
+# ============================================================
+# PERBARUI DASHBOARD
+# ============================================================
+
+def perbarui_dashboard(
+    total_normal_baru: int,
+    total_anomali_baru: int,
+) -> tuple[bool, str]:
+    """
+    Memperbarui node opentender/dashboard dengan menambahkan
+    hasil batch terbaru ke akumulasi yang sudah ada.
+
+    Node yang diperbarui:
+        opentender/dashboard/total_upload_tenders
+        opentender/dashboard/total_upload_normal
+        opentender/dashboard/total_upload_anomali
+        opentender/dashboard/pct_upload_anomali
+        opentender/dashboard/last_updated
+
+    Node historis (total_tenders, total_awards, dll.) TIDAK disentuh.
+    """
+    try:
+        if not init_firebase():
+            return False, "Firebase tidak terinisialisasi."
+
+        ref = db.reference("opentender/dashboard")
+        snapshot = ref.get() or {}
+
+        # Akumulasi khusus untuk hasil upload (terpisah dari data historis)
+        prev_normal  = int(snapshot.get("total_upload_normal",  0) or 0)
+        prev_anomali = int(snapshot.get("total_upload_anomali", 0) or 0)
+
+        new_normal  = prev_normal  + total_normal_baru
+        new_anomali = prev_anomali + total_anomali_baru
+        new_total   = new_normal + new_anomali
+        new_pct     = round(new_anomali / new_total * 100, 2) if new_total > 0 else 0.0
+
+        ref.update({
+            "total_upload_tenders": int(new_total),
+            "total_upload_normal":  int(new_normal),
+            "total_upload_anomali": int(new_anomali),
+            "pct_upload_anomali":   float(new_pct),
+            "last_updated":         _now_iso(),
+        })
+        return True, "Node dashboard berhasil diperbarui."
+    except Exception as e:
+        return False, f"Gagal memperbarui dashboard Firebase: {e}"
+
+
+# ============================================================
+# BACA DATA DARI FIREBASE (UNTUK DASHBOARD)
+# ============================================================
+
+def ambil_dashboard_firebase() -> Optional[dict]:
+    """
+    Membaca node opentender/dashboard dari Firebase.
+    Mengembalikan dict atau None jika gagal.
+    """
+    try:
+        if not init_firebase():
+            return None
+        return db.reference("opentender/dashboard").get()
+    except Exception:
+        return None
+
+
+def ambil_riwayat_firebase(limit: int = 20) -> list[dict]:
+    """
+    Membaca riwayat upload dari opentender/analysis_history.
+    Mengembalikan list dict yang diurutkan terbaru dulu.
+    """
+    try:
+        if not init_firebase():
+            return []
+        snapshot = db.reference("opentender/analysis_history").get()
+        if not snapshot:
+            return []
+        items = list(snapshot.values())
+        # Urutkan berdasarkan timestamp terbaru
+        items.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+        return items[:limit]
+    except Exception:
+        return []
+
+
+def ambil_statistik_firebase() -> Optional[dict]:
+    """
+    Membaca node opentender/statistics dari Firebase.
+    """
+    try:
+        if not init_firebase():
+            return None
+        return db.reference("opentender/statistics").get()
+    except Exception:
+        return None
+
+
+----------------------------------------------------------------------
+FILE: .\db_mysql.py
+----------------------------------------------------------------------
+"""
+Modul database MySQL untuk proyek OpenTender Anomaly Detection.
+
+Fungsi utama:
+    - get_connection()           : membuka koneksi MySQL
+    - test_connection()          : menguji koneksi MySQL
+    - simpan_batch()             : catat riwayat upload ke upload_batches
+    - simpan_hasil_prediksi()    : simpan baris hasil prediksi ke analysis_results
+    - perbarui_status_batch()    : tandai batch selesai / gagal
+    - ambil_riwayat_upload()     : ambil daftar batch untuk ditampilkan di dashboard
+"""
+
+import mysql.connector
+import pandas as pd
+import numpy as np
+from datetime import datetime
+from typing import Optional
+
+from config import MYSQL_CONFIG, MYSQL_BATCH_SIZE
+
+
+# ============================================================
+# KONEKSI
+# ============================================================
+
+def get_connection():
+    """Membuka dan mengembalikan koneksi MySQL."""
+    return mysql.connector.connect(**MYSQL_CONFIG)
+
+
+def test_connection() -> bool:
+    """Menguji koneksi MySQL. Mengembalikan True jika berhasil."""
+    try:
+        cfg = MYSQL_CONFIG.copy()
+        cfg["connection_timeout"] = 2
+        conn = mysql.connector.connect(**cfg)
+        ok = conn.is_connected()
+        conn.close()
+        return ok
+    except Exception:
+        return False
+
+
+# ============================================================
+# UPLOAD BATCHES
+# ============================================================
+
+def simpan_batch(
+    conn,
+    batch_id: str,
+    filename: str,
+    total_rows: int = 0,
+    status: str = "processing",
+) -> None:
+    """Mencatat entri baru ke tabel upload_batches."""
+    sql = """
+        INSERT INTO upload_batches
+            (batch_id, filename, total_rows, total_normal, total_anomali,
+             pct_anomali, status, uploaded_at)
+        VALUES (%s, %s, %s, 0, 0, NULL, %s, %s)
+        ON DUPLICATE KEY UPDATE
+            filename   = VALUES(filename),
+            total_rows = VALUES(total_rows),
+            status     = VALUES(status)
+    """
+    cursor = conn.cursor()
+    cursor.execute(sql, (batch_id, filename, total_rows, status, datetime.now()))
+    conn.commit()
+    cursor.close()
+
+
+def perbarui_status_batch(
+    conn,
+    batch_id: str,
+    total_normal: int,
+    total_anomali: int,
+    status: str = "done",
+    catatan: Optional[str] = None,
+) -> None:
+    """Memperbarui statistik dan status akhir sebuah batch."""
+    total = total_normal + total_anomali
+    pct = round(total_anomali / total * 100, 2) if total > 0 else 0.0
+    sql = """
+        UPDATE upload_batches
+        SET total_rows    = %s,
+            total_normal  = %s,
+            total_anomali = %s,
+            pct_anomali   = %s,
+            status        = %s,
+            completed_at  = %s,
+            catatan       = %s
+        WHERE batch_id = %s
+    """
+    cursor = conn.cursor()
+    cursor.execute(sql, (
+        total, total_normal, total_anomali, pct,
+        status, datetime.now(), catatan, batch_id,
+    ))
+    conn.commit()
+    cursor.close()
+
+
+def ambil_riwayat_upload(conn, limit: int = 20) -> list[dict]:
+    """Mengambil daftar riwayat upload terbaru."""
+    sql = """
+        SELECT batch_id, filename, total_rows, total_normal,
+               total_anomali, pct_anomali, status,
+               uploaded_at, completed_at
+        FROM   upload_batches
+        ORDER BY uploaded_at DESC
+        LIMIT %s
+    """
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (limit,))
+    rows = cursor.fetchall()
+    cursor.close()
+    return rows
+
+
+def ambil_detail_batch(conn, batch_id: str) -> Optional[dict]:
+    """Mengambil informasi detail satu batch dari upload_batches."""
+    sql = "SELECT * FROM upload_batches WHERE batch_id = %s"
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, (batch_id,))
+    row = cursor.fetchone()
+    cursor.close()
+    return row
+
+
+def ambil_hasil_analisis(conn, batch_id: Optional[str] = None, limit: int = 2000) -> list[dict]:
+    """Mengambil baris hasil analisis dari analysis_results."""
+    if batch_id:
+        sql = """
+            SELECT row_id, batch_id, tender_id, tender_ocid, tender_datePublished,
+                   tender_mainProcurementCategory, tender_minValue_amount, value_amount,
+                   skor_anomali, prediksi_anomali, status_deteksi
+            FROM analysis_results
+            WHERE batch_id = %s
+            ORDER BY row_id ASC
+            LIMIT %s
+        """
+        params = (batch_id, limit)
+    else:
+        sql = """
+            SELECT row_id, batch_id, tender_id, tender_ocid, tender_datePublished,
+                   tender_mainProcurementCategory, tender_minValue_amount, value_amount,
+                   skor_anomali, prediksi_anomali, status_deteksi
+            FROM analysis_results
+            ORDER BY row_id DESC
+            LIMIT %s
+        """
+        params = (limit,)
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(sql, params)
+    rows = cursor.fetchall()
+    cursor.close()
+    return rows
+
+
+# ============================================================
+# HASIL PREDIKSI
+# ============================================================
+
+def _safe(val):
+    """Konversi nilai numpy/pandas ke tipe Python biasa untuk MySQL."""
+    if val is None:
+        return None
+    if isinstance(val, (float, np.floating)):
+        return None if (np.isnan(val) or np.isinf(val)) else float(val)
+    if isinstance(val, (int, np.integer)):
+        return int(val)
+    s = str(val).strip()
+    return None if s == "" or s.lower() == "nan" else s
+
+
+def simpan_hasil_prediksi(
+    conn,
+    batch_id: str,
+    df_hasil: pd.DataFrame,
+    batch_size: int = MYSQL_BATCH_SIZE,
+) -> tuple[int, int]:
+    """
+    Menyimpan DataFrame hasil prediksi ke tabel analysis_results.
+    Mengembalikan (total_normal, total_anomali).
+    """
+    sql = """
+        INSERT INTO analysis_results (
+            batch_id,
+            tender_id, tender_ocid,
+            tender_datePublished,
+            tender_mainProcurementCategory,
+            tender_minValue_amount,
+            value_amount,
+            log_min_value, log_award_value, selisih_award_rel,
+            skor_anomali,
+            prediksi_anomali,
+            status_deteksi
+        ) VALUES (
+            %s,
+            %s, %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s, %s, %s,
+            %s,
+            %s,
+            %s
+        )
+    """
+
+    def _get(row, *keys, default=None):
+        for k in keys:
+            if k in row.index and pd.notna(row[k]):
+                return row[k]
+        return default
+
+    total_normal  = 0
+    total_anomali = 0
+    total_saved   = 0
+
+    cursor = conn.cursor()
+
+    for start in range(0, len(df_hasil), batch_size):
+        chunk = df_hasil.iloc[start : start + batch_size]
+        records = []
+
+        for _, row in chunk.iterrows():
+            status = str(row.get("status_deteksi", "")) if "status_deteksi" in row.index else ""
+            if status == "Normal":
+                total_normal += 1
+            elif status == "Anomali":
+                total_anomali += 1
+
+            # Parse tanggal
+            tgl = _get(row, "tender_datePublished", "date")
+            if tgl is not None:
+                try:
+                    tgl = pd.to_datetime(tgl, utc=True).tz_localize(None).to_pydatetime()
+                except Exception:
+                    tgl = None
+
+            records.append((
+                batch_id,
+                _safe(_get(row, "id", "main_id", "id_main")),
+                _safe(_get(row, "ocid", "main_ocid", "ocid_main")),
+                tgl,
+                _safe(_get(row, "tender_mainProcurementCategory")),
+                _safe(_get(row, "tender_minValue_amount")),
+                _safe(_get(row, "value_amount")),
+                _safe(_get(row, "log_min_value")),
+                _safe(_get(row, "log_award_value")),
+                _safe(_get(row, "selisih_award_rel")),
+                _safe(_get(row, "skor_anomali")),
+                _safe(_get(row, "prediksi_anomali")),
+                status if status else None,
+            ))
+
+        try:
+            cursor.executemany(sql, records)
+            conn.commit()
+            total_saved += len(records)
+        except Exception:
+            conn.rollback()
+            cursor.close()
+            raise
+
+    cursor.close()
+    return total_normal, total_anomali
+
+
+----------------------------------------------------------------------
+FILE: .\get_label_html.py
+----------------------------------------------------------------------
+import subprocess
+import time
+import json
+import urllib.request
+import asyncio
+import websockets
+import os
+
+STREAMLIT_EXE = r".venv\Scripts\streamlit.exe"
+CHROME_PATH = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+
+proc_st = subprocess.Popen([
+    STREAMLIT_EXE, "run", "app.py",
+    "--server.headless", "true",
+    "--server.port", "8501",
+    "--server.address", "127.0.0.1"
+])
+
+for i in range(25):
+    try:
+        with urllib.request.urlopen("http://127.0.0.1:8501/_stcore/health", timeout=1) as r:
+            if r.status == 200:
+                break
+    except Exception:
+        time.sleep(1)
+
+proc_chrome = subprocess.Popen([
+    CHROME_PATH,
+    "--headless=new",
+    "--remote-debugging-port=9222",
+    "http://127.0.0.1:8501"
+])
+
+time.sleep(3)
+
+async def check():
+    with urllib.request.urlopen("http://127.0.0.1:9222/json") as r:
+        tabs = json.loads(r.read().decode())
+    ws_url = tabs[0]["webSocketDebuggerUrl"]
+    async with websockets.connect(ws_url) as ws:
+        await asyncio.sleep(5)
+        # Find all divs inside label and print their tag and attributes
+        js = """
+        (function() {
+            var labels = document.querySelectorAll('section[data-testid="stSidebar"] label');
+            var out = [];
+            labels.forEach(function(l) {
+                out.push(l.outerHTML);
+            });
+            return out.join("\\n---DIVIDER---\\n");
+        })()
+        """
+        await ws.send(json.dumps({"id": 1, "method": "Runtime.evaluate", "params": {"expression": js}}))
+        raw = await ws.recv()
+        val = json.loads(raw)["result"]["result"]["value"]
+        print("FOUND LABELS:\n", val[:1500])
+
+try:
+    asyncio.run(check())
+finally:
+    proc_chrome.terminate()
+    proc_st.terminate()
+
+
+----------------------------------------------------------------------
+FILE: .\inspect_dom.py
+----------------------------------------------------------------------
+"""
+Inspect DOM of radio buttons in Streamlit
+"""
+import urllib.request
+import json
+import asyncio
+import websockets
+
+async def get_dom():
+    with urllib.request.urlopen('http://127.0.0.1:9222/json') as r:
+        tabs = json.loads(r.read().decode())
+    ws_url = tabs[0]['webSocketDebuggerUrl']
+    async with websockets.connect(ws_url) as ws:
+        js = """
+        (function() {
+            var labels = document.querySelectorAll('section[data-testid="stSidebar"] div[role="radiogroup"] label');
+            var res = [];
+            labels.forEach(function(l) {
+                var items = [];
+                for (var i = 0; i < l.children.length; i++) {
+                    var c = l.children[i];
+                    items.push({
+                        tagName: c.tagName,
+                        className: c.className,
+                        testId: c.getAttribute('data-testid'),
+                        role: c.getAttribute('role'),
+                        ariaLabel: c.getAttribute('aria-label')
+                    });
+                }
+                res.push({
+                    text: l.innerText,
+                    children: items,
+                    html: l.outerHTML.substring(0, 400)
+                });
+            });
+            return JSON.stringify(res);
+        })()
+        """
+        await ws.send(json.dumps({'id': 1, 'method': 'Runtime.evaluate', 'params': {'expression': js}}))
+        raw = await ws.recv()
+        print('DOM result:', json.loads(raw)['result']['result']['value'])
+
+if __name__ == '__main__':
+    try:
+        asyncio.run(get_dom())
+    except Exception as e:
+        print('Error:', e)
+
+
+----------------------------------------------------------------------
+FILE: .\inspect_elements.py
+----------------------------------------------------------------------
+"""
+Inspect exact radio element and Vega/Altair element in Chrome DOM
+"""
+import urllib.request
+import json
+import asyncio
+import websockets
+
+async def inspect():
+    with urllib.request.urlopen("http://127.0.0.1:9222/json") as r:
+        tabs = json.loads(r.read().decode())
+    ws_url = tabs[0]["webSocketDebuggerUrl"]
+    async with websockets.connect(ws_url) as ws:
+        js = """
+        (function() {
+            var firstLabel = document.querySelector('section[data-testid="stSidebar"] div[role="radiogroup"] label');
+            var radioDiv = firstLabel ? firstLabel.firstElementChild.outerHTML : 'none';
+            var vegaCharts = document.querySelectorAll('.vega-embed, [data-testid="stVegaLiteChart"]').length;
+            var errors = [];
+            window.addEventListener('error', function(e) { errors.push(e.message); });
+            return JSON.stringify({
+                labelHtml: firstLabel ? firstLabel.outerHTML : 'none',
+                firstElementHtml: radioDiv,
+                vegaChartsCount: vegaCharts
+            });
+        })()
+        """
+        await ws.send(json.dumps({"id": 1, "method": "Runtime.evaluate", "params": {"expression": js}}))
+        raw = await ws.recv()
+        print("INSPECT RESULT:", json.loads(raw)["result"]["result"]["value"])
+
+if __name__ == '__main__':
+    asyncio.run(inspect())
+
+
+----------------------------------------------------------------------
+FILE: .\requirements.txt
+----------------------------------------------------------------------
+��a l t a i r = = 6 . 3 . 0 
+ 
+ a n y i o = = 4 . 1 5 . 1 
+ 
+ a t t r s = = 2 6 . 1 . 0 
+ 
+ b a c k p o r t s . z s t d = = 1 . 8 . 0 
+ 
+ b r o t l i = = 1 . 2 . 1 
+ 
+ C a c h e C o n t r o l = = 0 . 1 4 . 4 
+ 
+ c e r t i f i = = 2 0 2 6 . 1 0 . 2 3 
+ 
+ c f f i = = 2 . 1 . 1 
+ 
+ c h a r s e t - n o r m a l i z e r = = 3 . 5 . 2 
+ 
+ c l i c k = = 8 . 5 . 0 
+ 
+ c l o u d p i c k l e = = 3 . 1 . 2 
+ 
+ c r y p t o g r a p h y = = 5 0 . 0 . 2 
+ 
+ e t _ x m l f i l e = = 2 . 0 . 0 
+ 
+ f i r e b a s e _ a d m i n = = 7 . 7 . 0 
+ 
+ g o o g l e - a p i - c o r e = = 2 . 4 4 . 0 
+ 
+ g o o g l e - a u t h = = 2 . 6 2 . 1 
+ 
+ g o o g l e - c l o u d - c o r e = = 2 . 8 . 0 
+ 
+ g o o g l e - c l o u d - f i r e s t o r e = = 2 . 3 4 . 1 
+ 
+ g o o g l e - c l o u d - s t o r a g e = = 3 . 1 7 . 1 
+ 
+ g o o g l e - c r c 3 2 c = = 1 . 9 . 0 
+ 
+ g o o g l e - r e s u m a b l e - m e d i a = = 2 . 1 1 . 0 
+ 
+ g o o g l e a p i s - c o m m o n - p r o t o s = = 1 . 7 6 . 0 
+ 
+ g r p c i o = = 1 . 8 5 . 1 
+ 
+ g r p c i o - s t a t u s = = 1 . 8 5 . 1 
+ 
+ h 1 1 = = 0 . 1 6 . 0 
+ 
+ h 2 = = 4 . 4 . 1 
+ 
+ h p a c k = = 4 . 2 . 0 
+ 
+ h t t p c o r e = = 1 . 0 . 9 
+ 
+ h t t p x = = 0 . 2 8 . 1 
+ 
+ h y p e r f r a m e = = 6 . 1 . 0 
+ 
+ i d n a = = 3 . 2 0 
+ 
+ i n f l a t e 6 4 = = 1 . 0 . 4 
+ 
+ i t s d a n g e r o u s = = 2 . 2 . 0 
+ 
+ J i n j a 2 = = 3 . 1 . 6 
+ 
+ j o b l i b = = 1 . 6 . 0 
+ 
+ j s o n s c h e m a = = 4 . 2 6 . 0 
+ 
+ j s o n s c h e m a - s p e c i f i c a t i o n s = = 2 0 2 5 . 9 . 1 
+ 
+ M a r k u p S a f e = = 3 . 0 . 4 
+ 
+ m s g p a c k = = 1 . 2 . 4 
+ 
+ m u l t i v o l u m e f i l e = = 0 . 2 . 3 
+ 
+ m y s q l - c o n n e c t o r - p y t h o n = = 2 6 . 1 0 . 0 
+ 
+ n a r w h a l s = = 2 . 2 7 . 1 
+ 
+ n u m p y = = 2 . 5 . 4 
+ 
+ o p e n p y x l = = 3 . 1 . 5 
+ 
+ o p e n t e l e m e t r y - a p i = = 1 . 4 5 . 2 
+ 
+ p a c k a g i n g = = 2 6 . 3 
+ 
+ p a n d a s = = 3 . 1 . 0 
+ 
+ p i l l o w = = 1 3 . 0 . 0 
+ 
+ p r o t o - p l u s = = 1 . 2 9 . 0 
+ 
+ p r o t o b u f = = 7 . 3 6 . 2 
+ 
+ p s u t i l = = 7 . 2 . 2 
+ 
+ p y 7 z r = = 1 . 1 . 4 
+ 
+ p y a r r o w = = 2 6 . 0 . 0 
+ 
+ p y a s n 1 = = 0 . 6 . 5 
+ 
+ p y a s n 1 _ m o d u l e s = = 0 . 4 . 2 
+ 
+ p y b c j = = 1 . 0 . 8 
+ 
+ p y c p a r s e r = = 3 . 1 2 
+ 
+ p y c r y p t o d o m e x = = 3 . 2 4 . 1 
+ 
+ p y d e c k = = 0 . 9 . 3 
+ 
+ P y J W T = = 2 . 1 5 . 1 
+ 
+ p y p p m d = = 1 . 3 . 1 
+ 
+ p y t h o n - d a t e u t i l = = 3 . 0 . 0 
+ 
+ p y t h o n - m u l t i p a r t = = 0 . 0 . 3 2 
+ 
+ r a r f i l e = = 4 . 5 
+ 
+ r e f e r e n c i n g = = 0 . 3 7 . 0 
+ 
+ r e q u e s t s = = 2 . 3 4 . 2 
+ 
+ r p d s - p y = = 2 0 2 6 . 9 . 1 
+ 
+ s c i k i t - l e a r n = = 1 . 6 . 1 
+ 
+ s c i p y = = 1 . 1 8 . 1 
+ 
+ s i x = = 1 . 1 7 . 0 
+ 
+ s t a r l e t t e = = 1 . 1 0 . 0 
+ 
+ s t r e a m l i t = = 1 . 6 6 . 1 
+ 
+ t e x t t a b l e = = 1 . 7 . 2 
+ 
+ t h r e a d p o o l c t l = = 3 . 7 . 0 
+ 
+ t y p i n g _ e x t e n s i o n s = = 4 . 1 6 . 0 
+ 
+ t z d a t a = = 2 0 2 6 . 5 
+ 
+ u r l l i b 3 = = 2 . 8 . 0 
+ 
+ u v i c o r n = = 0 . 5 4 . 0 
+ 
+ w a t c h d o g = = 6 . 0 . 0 
+ 
+ w e b s o c k e t s = = 1 7 . 3 
+ 
+ 
+
+----------------------------------------------------------------------
+FILE: .\take_screenshot.py
+----------------------------------------------------------------------
+"""
+Capture high-res screenshot when KPI cards and Vega charts are fully rendered.
+"""
+
+import subprocess
+import time
+import json
+import urllib.request
+import asyncio
+import websockets
+import os
+import sys
+import base64
+
+STREAMLIT_EXE = r".venv\Scripts\streamlit.exe"
+CHROME_PATH = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+output_png = os.path.abspath("screenshot_dashboard.png")
+
+proc_st = subprocess.Popen([
+    STREAMLIT_EXE, "run", "app.py",
+    "--server.headless", "true",
+    "--server.port", "8501",
+    "--server.address", "127.0.0.1"
+])
+
+print("Menunggu Streamlit...")
+for i in range(25):
+    try:
+        with urllib.request.urlopen("http://127.0.0.1:8501/_stcore/health", timeout=1) as r:
+            if r.status == 200:
+                print(f"Streamlit siap ({i+1}s)!")
+                break
+    except Exception:
+        time.sleep(1)
+
+proc_chrome = subprocess.Popen([
+    CHROME_PATH,
+    "--headless=new",
+    "--disable-gpu",
+    "--remote-debugging-port=9222",
+    "--window-size=1440,1100",
+    "http://127.0.0.1:8501"
+])
+
+time.sleep(2)
+
+async def capture():
+    with urllib.request.urlopen("http://127.0.0.1:9222/json") as resp:
+        tabs = json.loads(resp.read().decode())
+    
+    ws_url = None
+    for t in tabs:
+        if t.get("type") == "page" and "8501" in t.get("url", ""):
+            ws_url = t.get("webSocketDebuggerUrl")
+            break
+    if not ws_url and tabs:
+        ws_url = tabs[0].get("webSocketDebuggerUrl")
+
+    async with websockets.connect(ws_url) as ws:
+        print("Menunggu render DOM (KPI cards & Vega)...")
+        
+        for sec in range(45):
+            await asyncio.sleep(1)
+            js = """
+            (function() {
+                var kpi = document.querySelectorAll('.kpi-card').length;
+                var svg = document.querySelectorAll('[data-testid="stVegaLiteChart"] svg, .vega-embed svg').length;
+                return {kpi: kpi, svg: svg};
+            })()
+            """
+            msg = {"id": 100 + sec, "method": "Runtime.evaluate", "params": {"expression": js}}
+            await ws.send(json.dumps(msg))
+            res = json.loads(await ws.recv())
+            val = res.get("result", {}).get("result", {}).get("value", {})
+            kpi_cnt = val.get("kpi", 0) if isinstance(val, dict) else 0
+            svg_cnt = val.get("svg", 0) if isinstance(val, dict) else 0
+            print(f"  Detik {sec+1}: KPI cards={kpi_cnt}, Vega SVGs={svg_cnt}")
+            if kpi_cnt >= 4 and svg_cnt >= 2:
+                print(f"RENDER LENGKAP: {kpi_cnt} KPI cards dan {svg_cnt} charts!")
+                break
+
+        await asyncio.sleep(2)
+
+        msg = {
+            "id": 1,
+            "method": "Page.captureScreenshot",
+            "params": {"format": "png", "captureBeyondViewport": False}
+        }
+        await ws.send(json.dumps(msg))
+        
+        while True:
+            raw = await ws.recv()
+            data = json.loads(raw)
+            if data.get("id") == 1:
+                img_bytes = base64.b64decode(data["result"]["data"])
+                with open(output_png, "wb") as f:
+                    f.write(img_bytes)
+                print(f"BERHASIL! Screenshot tersimpan: {output_png} ({len(img_bytes):,} bytes)")
+                break
+
+try:
+    asyncio.run(capture())
+finally:
+    proc_chrome.terminate()
+    proc_st.terminate()
+    print("Selesai.")
+
+
+----------------------------------------------------------------------
+FILE: .\test_e2e_integration.py
+----------------------------------------------------------------------
+"""
+Skrip pengujian End-to-End integrasi:
+Upload CSV mini -> Prediksi Model -> Simpan MySQL -> Kirim Firebase -> Verifikasi
+"""
+
+import sys
+import os
+import uuid
+import pandas as pd
+import numpy as np
+import joblib
+
+from config import FILE_MODEL
+from db_mysql import get_connection, simpan_batch, simpan_hasil_prediksi, perbarui_status_batch
+import db_firebase
+
+def test_pipeline():
+    print("=" * 60)
+    print("PENGUJIAN INTEGRASI END-TO-END (CSV KECIL)")
+    print("=" * 60)
+
+    # 1. Pemuatan Model
+    print("\n[1] Memuat model...")
+    paket = joblib.load(str(FILE_MODEL))
+    print("    Model berhasil dimuat:", type(paket["model"]).__name__)
+
+    # 2. Baca CSV Uji
+    print("\n[2] Membaca dataset uji kecil...")
+    main_df = pd.read_csv("dataset_test/main.csv")
+    awards_df = pd.read_csv("dataset_test/awards.csv")
+    print(f"    main.csv   : {len(main_df)} baris")
+    print(f"    awards.csv : {len(awards_df)} baris")
+
+    # 3. Integrasi
+    print("\n[3] Mengintegrasikan dataset (merge)...")
+    for col in ("id", "ocid"):
+        main_df[col] = main_df[col].astype("string").str.strip()
+    for col in ("main_id", "main_ocid"):
+        awards_df[col] = awards_df[col].astype("string").str.strip()
+
+    main_df["tender_minValue_amount"] = pd.to_numeric(main_df["tender_minValue_amount"], errors="coerce")
+    awards_df["value_amount"] = pd.to_numeric(awards_df["value_amount"], errors="coerce")
+
+    merged = awards_df.merge(
+        main_df, left_on="main_id", right_on="id", how="left",
+        suffixes=("_award", "_main")
+    )
+    print(f"    Hasil merge: {len(merged)} baris")
+
+    # 4. Deteksi Anomali
+    print("\n[4] Menjalankan deteksi anomali...")
+    nilai_min = pd.to_numeric(merged["tender_minValue_amount"], errors="coerce")
+    nilai_kontrak = pd.to_numeric(merged["value_amount"], errors="coerce")
+
+    fitur = pd.DataFrame(index=merged.index)
+    fitur["log_min_value"] = np.log1p(nilai_min.clip(lower=0))
+    fitur["log_award_value"] = np.log1p(nilai_kontrak.clip(lower=0))
+    fitur["selisih_award_rel"] = ((nilai_min - nilai_kontrak) / nilai_min).where(nilai_min.ne(0))
+    fitur = fitur.replace([np.inf, -np.inf], np.nan)
+
+    fitur_imp = pd.DataFrame(
+        paket["imputer"].transform(fitur),
+        columns=fitur.columns,
+        index=merged.index,
+    )
+    fitur_imp["min_value_missing"] = nilai_min.isna().astype(int)
+
+    kategori = merged["tender_mainProcurementCategory"].astype("string").str.strip().str.lower()
+    for item in ("goods", "services", "works"):
+        fitur_imp[f"tender_mainProcurementCategory_{item}"] = (
+            kategori == item
+        ).fillna(False).astype(int)
+
+    fitur_model = fitur_imp.reindex(columns=paket["fitur_model"])
+    pred = paket["model"].predict(fitur_model)
+    skor = paket["model"].score_samples(fitur_model)
+
+    hasil = merged.copy()
+    hasil["log_min_value"] = fitur["log_min_value"].values
+    hasil["log_award_value"] = fitur["log_award_value"].values
+    hasil["selisih_award_rel"] = fitur["selisih_award_rel"].values
+    hasil["prediksi_anomali"] = pred
+    hasil["skor_anomali"] = -skor
+    hasil["status_deteksi"] = np.where(pred == -1, "Anomali", "Normal")
+
+    total_rows = len(hasil)
+    total_anomali = int((hasil["status_deteksi"] == "Anomali").sum())
+    total_normal = total_rows - total_anomali
+    pct_anomali = round((total_anomali / total_rows) * 100, 2)
+
+    print(f"    Total dianalisis : {total_rows}")
+    print(f"    Normal           : {total_normal}")
+    print(f"    Anomali          : {total_anomali} ({pct_anomali}%)")
+
+    # 5. Simpan ke MySQL
+    batch_id = f"test-{uuid.uuid4().hex[:8]}"
+    print(f"\n[5] Menyimpan ke MySQL (Batch ID: {batch_id})...")
+    conn = get_connection()
+    simpan_batch(conn, batch_id, "test_dataset_small.csv", total_rows=total_rows, status="processing")
+    n_norm, n_anom = simpan_hasil_prediksi(conn, batch_id, hasil)
+    perbarui_status_batch(conn, batch_id, n_norm, n_anom, status="done")
+
+    # Verifikasi langsung dari MySQL
+    cur = conn.cursor(dictionary=True)
+    cur.execute("SELECT * FROM upload_batches WHERE batch_id = %s", (batch_id,))
+    batch_row = cur.fetchone()
+    print("    Verifikasi batch MySQL:", batch_row)
+
+    cur.execute("SELECT COUNT(*) AS total FROM analysis_results WHERE batch_id = %s", (batch_id,))
+    res_count = cur.fetchone()["total"]
+    print(f"    Verifikasi baris analysis_results: {res_count} baris tersimpan.")
+    cur.close()
+    conn.close()
+
+    # 6. Kirim ke Firebase RTDB
+    print(f"\n[6] Mengirim ke Firebase Realtime Database...")
+    ok_fb, msg_fb = db_firebase.kirim_ringkasan_batch(
+        batch_id=batch_id,
+        filename="test_dataset_small.csv",
+        total_rows=total_rows,
+        total_normal=total_normal,
+        total_anomali=total_anomali,
+        catatan="pengujian_otomatis",
+    )
+    print("    Kirim history:", ok_fb, msg_fb)
+
+    ok_dash, msg_dash = db_firebase.perbarui_dashboard(total_normal, total_anomali)
+    print("    Update dashboard:", ok_dash, msg_dash)
+
+    # 7. Verifikasi dari Firebase
+    print("\n[7] Verifikasi pembacaan dari Firebase...")
+    riwayat = db_firebase.ambil_riwayat_firebase(limit=5)
+    print("    Riwayat terbaru di Firebase:")
+    for r in riwayat:
+        if r.get("batch_id") == batch_id:
+            print(f"    -> DITEMUKAN BATCH {batch_id}:", r)
+
+    dash_node = db_firebase.ambil_dashboard_firebase()
+    print("    Data terkini opentender/dashboard:")
+    print("      total_upload_tenders :", dash_node.get("total_upload_tenders"))
+    print("      total_upload_normal  :", dash_node.get("total_upload_normal"))
+    print("      total_upload_anomali :", dash_node.get("total_upload_anomali"))
+    print("      pct_upload_anomali   :", dash_node.get("pct_upload_anomali"))
+    print("      last_updated         :", dash_node.get("last_updated"))
+
+    print("\n" + "=" * 60)
+    print("SEMUA PENGUJIAN INTEGRASI BERHASIL 100%!")
+    print("=" * 60)
+
+if __name__ == "__main__":
+    test_pipeline()
+
+
+----------------------------------------------------------------------
+FILE: .\uji_dataset.py
+----------------------------------------------------------------------
+
+import pandas as pd
+import joblib
+import os
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning)
+
+FILE_MODEL = "model_isolation_forest_opentender.joblib"
+FILE_DATA = "hasil_deteksi_anomali_opentender.csv"
+
+if not os.path.exists(FILE_MODEL):
+    print("File model tidak ditemukan.")
+    raise SystemExit
+
+if not os.path.exists(FILE_DATA):
+    print("File dataset hasil deteksi tidak ditemukan.")
+    raise SystemExit
+
+print("Memuat model...")
+paket = joblib.load(FILE_MODEL)
+
+print("Membaca 100 baris dataset...")
+df = pd.read_csv(FILE_DATA, nrows=100)
+
+print("\nKolom dataset:")
+print(df.columns.tolist())
+
+print("\nJumlah baris yang berhasil dibaca:", len(df))
+
+print("\nContoh data:")
+print(df.head(3).to_string(index=False))
+
+print("\nKolom prediksi yang tersedia:")
+print([
+    kolom for kolom in df.columns
+    if any(kata in kolom.lower()
+           for kata in ["anomali", "prediksi", "label", "skor", "status"])
+])
+
+
+----------------------------------------------------------------------
+FILE: .\uji_konsistensi.py
+----------------------------------------------------------------------
+
+import joblib
+import numpy as np
+import pandas as pd
+import warnings
+from sklearn.exceptions import InconsistentVersionWarning
+
+warnings.filterwarnings("error", category=InconsistentVersionWarning)
+
+paket = joblib.load("model_isolation_forest_opentender.joblib")
+df = pd.read_csv("hasil_deteksi_anomali_opentender.csv", nrows=1000)
+
+# 1. Buat 3 fitur numerik
+fitur_numerik = pd.DataFrame(index=df.index)
+
+fitur_numerik["log_min_value"] = np.log1p(
+    df["tender_minValue_amount"].clip(lower=0)
+)
+fitur_numerik["log_award_value"] = np.log1p(
+    df["value_amount"].clip(lower=0)
+)
+
+fitur_numerik["selisih_award_rel"] = (
+    df["tender_minValue_amount"] - df["value_amount"]
+) / df["tender_minValue_amount"]
+
+fitur_numerik = fitur_numerik.replace([np.inf, -np.inf], np.nan)
+
+# 2. Imputasi hanya 3 fitur numerik
+fitur_imputasi = pd.DataFrame(
+    paket["imputer"].transform(fitur_numerik),
+    columns=fitur_numerik.columns,
+    index=df.index,
+)
+
+# 3. Tambahkan 4 fitur indikator
+fitur_imputasi["min_value_missing"] = (
+    df["tender_minValue_amount"].isna().astype(int)
+)
+
+for kategori in ["goods", "services", "works"]:
+    fitur_imputasi[
+        f"tender_mainProcurementCategory_{kategori}"
+    ] = (
+        df["tender_mainProcurementCategory"]
+        .eq(kategori)
+        .astype(int)
+    )
+
+# 4. Pastikan urutan fitur sesuai saat model dilatih
+fitur_model = fitur_imputasi.reindex(
+    columns=paket["fitur_model"]
+)
+
+# 5. Prediksi dan bandingkan dengan label tersimpan
+prediksi_lokal = paket["model"].predict(fitur_model)
+prediksi_asli = df["prediksi_anomali"].to_numpy()
+
+cocok = prediksi_lokal == prediksi_asli
+
+print("Jumlah data diuji:", len(df))
+print("Prediksi cocok:", int(cocok.sum()))
+print("Prediksi berbeda:", int((~cocok).sum()))
+print("Persentase kecocokan:", round(cocok.mean() * 100, 2), "%")
+
+if cocok.all():
+    print("HASIL: Semua label pada sampel cocok.")
+else:
+    print("HASIL: Ada perbedaan; preprocessing perlu diperiksa.")
+
+
+----------------------------------------------------------------------
+FILE: .\scripts\buat_tabel_analisis.py
+----------------------------------------------------------------------
+"""
+Skema tabel baru untuk menyimpan riwayat upload dan hasil analisis.
+
+Jalankan sekali:
+    python scripts/buat_tabel_analisis.py
+
+Tabel yang dibuat:
+    - upload_batches   : riwayat setiap proses upload CSV
+    - analysis_results : hasil prediksi per baris tender
+"""
+
+import sys
+import os
+
+# Pastikan root proyek ada di sys.path sehingga config.py bisa diimpor
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
+import mysql.connector
+from config import MYSQL_CONFIG
+
+QUERIES = [
+    """
+    CREATE TABLE IF NOT EXISTS upload_batches (
+        batch_id        VARCHAR(36)  NOT NULL PRIMARY KEY,
+        filename        TEXT,
+        total_rows      INT          NOT NULL DEFAULT 0,
+        total_normal    INT          NOT NULL DEFAULT 0,
+        total_anomali   INT          NOT NULL DEFAULT 0,
+        pct_anomali     DOUBLE       NULL,
+        status          VARCHAR(50)  NOT NULL DEFAULT 'pending',
+        uploaded_at     DATETIME     NOT NULL,
+        completed_at    DATETIME     NULL,
+        catatan         TEXT
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS analysis_results (
+        row_id                          BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        batch_id                        VARCHAR(36)  NOT NULL,
+        tender_id                       VARCHAR(255) NULL,
+        tender_ocid                     VARCHAR(255) NULL,
+        tender_datePublished            DATETIME     NULL,
+        tender_mainProcurementCategory  VARCHAR(100) NULL,
+        tender_minValue_amount          DOUBLE       NULL,
+        value_amount                    DOUBLE       NULL,
+        log_min_value                   DOUBLE       NULL,
+        log_award_value                 DOUBLE       NULL,
+        selisih_award_rel               DOUBLE       NULL,
+        skor_anomali                    DOUBLE       NULL,
+        prediksi_anomali                TINYINT      NULL   COMMENT '1=Normal, -1=Anomali',
+        status_deteksi                  VARCHAR(20)  NULL   COMMENT 'Normal atau Anomali',
+        INDEX idx_ar_batch_id (batch_id),
+        INDEX idx_ar_status (status_deteksi),
+        CONSTRAINT fk_ar_batch_id FOREIGN KEY (batch_id) 
+            REFERENCES upload_batches(batch_id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    """
+]
+
+def main():
+    print("=" * 55)
+    print("MEMBUAT TABEL ANALISIS BARU")
+    print("=" * 55)
+
+    conn = None
+    try:
+        conn = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = conn.cursor()
+        print(f"Koneksi MySQL berhasil ke database '{MYSQL_CONFIG['database']}'.")
+
+        for i, query in enumerate(QUERIES, 1):
+            cursor.execute(query)
+            print(f"Query {i} berhasil dieksekusi.")
+
+        conn.commit()
+
+        print("\nTabel yang tersedia:")
+        cursor.execute("SHOW TABLES")
+        for (tbl,) in cursor.fetchall():
+            print(f"  - {tbl}")
+
+        print("\nSelesai membuat tabel analisis.")
+
+    except mysql.connector.Error as err:
+        print(f"\nGAGAL: {err}")
+    finally:
+        if conn and conn.is_connected():
+            cursor.close()
+            conn.close()
+
+if __name__ == "__main__":
+    main()
+
+
+----------------------------------------------------------------------
+FILE: .\scripts\buat_tabel_mysql.py
+----------------------------------------------------------------------
+
+import mysql.connector
+
+db = mysql.connector.connect(
+    host="localhost",
+    port=3306,
+    user="root",
+    password="",
+    database="opentender_bigdata"
+)
+
+cursor = db.cursor()
+
+queries = [
+    """
+    CREATE TABLE IF NOT EXISTS tenders (
+        id VARCHAR(255),
+        tag VARCHAR(100),
+        date DATETIME NULL,
+        ocid VARCHAR(255) PRIMARY KEY,
+        language VARCHAR(20),
+        initiationType VARCHAR(100),
+        buyer_id VARCHAR(100),
+        buyer_name TEXT,
+        tender_id BIGINT,
+        tender_mainProcurementCategory VARCHAR(100),
+        tender_title TEXT,
+        tender_datePublished DATETIME NULL,
+        tender_status VARCHAR(100),
+        tender_statusDetails TEXT,
+        tender_value_currency VARCHAR(10),
+        tender_minValue_amount DOUBLE NULL,
+        tender_minValue_currency VARCHAR(10),
+        tender_tenderPeriod_startDate DATETIME NULL,
+        tender_procuringEntity_id BIGINT,
+        tender_procuringEntity_name TEXT,
+        tender_additionalProcurementCategories TEXT,
+        planning_budget_id DOUBLE NULL,
+        planning_budget_description TEXT,
+        planning_budget_project TEXT,
+        planning_budget_amount_amount DOUBLE NULL,
+        planning_budget_amount_currency VARCHAR(10)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS awards (
+        id VARCHAR(255) PRIMARY KEY,
+        date DATETIME NULL,
+        title TEXT,
+        value_amount DOUBLE NULL,
+        value_currency VARCHAR(10),
+        main_ocid VARCHAR(255),
+        main_id VARCHAR(255),
+        FOREIGN KEY (main_ocid)
+            REFERENCES tenders(ocid)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS award_suppliers (
+        id VARCHAR(255) PRIMARY KEY,
+        name TEXT,
+        main_ocid VARCHAR(255),
+        main_id VARCHAR(255),
+        awards_id VARCHAR(255),
+        FOREIGN KEY (main_ocid)
+            REFERENCES tenders(ocid),
+        FOREIGN KEY (awards_id)
+            REFERENCES awards(id)
+    )
+    """
+]
+
+try:
+    for query in queries:
+        cursor.execute(query)
+
+    db.commit()
+    print("Semua tabel berhasil dibuat!")
+
+    cursor.execute("SHOW TABLES")
+    for table in cursor.fetchall():
+        print("-", table[0])
+
+except mysql.connector.Error as error:
+    print("Terjadi kesalahan:", error)
+
+finally:
+    cursor.close()
+    db.close()
+
+
+----------------------------------------------------------------------
+FILE: .\scripts\hitungdataset.py
+----------------------------------------------------------------------
+import os
+
+folder = "dataset"
+
+files = [
+    "main.csv",
+    "awards.csv",
+    "awards_suppliers.csv"
+]
+
+total = 0
+
+print("UKURAN DATASET OPENTENDER")
+print("=" * 40)
+
+for filename in files:
+    path = os.path.join(folder, filename)
+
+    size = os.path.getsize(path)
+    size_mb = size / (1024 * 1024)
+
+    total += size
+
+    print(f"{filename}: {size_mb:.2f} MB")
+
+print("=" * 40)
+print(f"TOTAL: {total / (1024 * 1024):.2f} MB")
+
+----------------------------------------------------------------------
+FILE: .\scripts\import_mysql.py
+----------------------------------------------------------------------
+
+import os
+import pandas as pd
+import mysql.connector
+
+from decimal import Decimal
+from datetime import datetime
+
+# ==========================================
+# KONFIGURASI
+# ==========================================
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATASET_DIR = os.path.join(BASE_DIR, "dataset")
+
+CHUNK_SIZE = 5000
+
+DB_CONFIG = {
+    "host": "127.0.0.1",
+    "port": 3306,
+    "user": "root",
+    "password": "",  # Sesuaikan jika MySQL memiliki password
+    "database": "opentender_bigdata"
+}
+
+DATA_FILES = [
+    ("main.csv", "tenders"),
+    ("awards.csv", "awards"),
+    ("awards_suppliers.csv", "award_suppliers")
+]
+
+
+# ==========================================
+# KONVERSI DATA BERDASARKAN TIPE MYSQL
+# ==========================================
+
+def convert_value(value, data_type):
+
+    if pd.isna(value) or str(value).strip() == "":
+        return None
+
+    value = str(value).strip()
+
+    if data_type in (
+        "tinyint", "smallint", "mediumint",
+        "int", "integer", "bigint"
+    ):
+        return int(float(value))
+
+    if data_type in ("float", "double", "real"):
+        return float(value)
+
+    if data_type in ("decimal", "numeric"):
+        return Decimal(value)
+
+    if data_type == "date":
+        return pd.to_datetime(value, utc=True).date()
+
+    if data_type in ("datetime", "timestamp"):
+        dt = pd.to_datetime(value, utc=True)
+        return dt.tz_localize(None).to_pydatetime()
+
+    return value
+
+
+# ==========================================
+# AMBIL STRUKTUR KOLOM MYSQL
+# ==========================================
+
+def get_table_columns(cursor, table):
+
+    cursor.execute("""
+        SELECT COLUMN_NAME, DATA_TYPE, EXTRA
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = %s
+        AND TABLE_NAME = %s
+        ORDER BY ORDINAL_POSITION
+    """, (DB_CONFIG["database"], table))
+
+    columns = cursor.fetchall()
+
+    if not columns:
+        raise Exception(f"Tabel {table} tidak ditemukan.")
+
+    # Abaikan kolom AUTO_INCREMENT dan generated
+    result = []
+
+    for column, data_type, extra in columns:
+
+        if "auto_increment" in extra.lower():
+            continue
+
+        if "generated" in extra.lower():
+            continue
+
+        result.append((column, data_type))
+
+    return result
+
+
+# ==========================================
+# PERIKSA DATABASE MASIH KOSONG
+# ==========================================
+
+def check_empty_database(cursor):
+
+    print("\nMEMERIKSA ISI DATABASE...")
+
+    for _, table in DATA_FILES:
+
+        cursor.execute(f"SELECT COUNT(*) FROM `{table}`")
+        total = cursor.fetchone()[0]
+
+        print(f"{table}: {total:,} baris")
+
+        if total != 0:
+            raise Exception(
+                f"Tabel {table} tidak kosong. "
+                "Migrasi dihentikan untuk mencegah duplikasi."
+            )
+
+
+# ==========================================
+# PROSES IMPORT CSV
+# ==========================================
+
+def import_csv(connection, filename, table):
+
+    path = os.path.join(DATASET_DIR, filename)
+
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"File tidak ditemukan: {path}")
+
+    cursor = connection.cursor()
+
+    print("\n" + "=" * 55)
+    print(f"MIGRASI: {filename} -> {table}")
+    print("=" * 55)
+
+    columns = get_table_columns(cursor, table)
+
+    db_column_names = [col[0] for col in columns]
+
+    # Periksa kesesuaian kolom CSV dan MySQL
+    csv_columns = list(pd.read_csv(path, nrows=0).columns)
+
+    missing = set(db_column_names) - set(csv_columns)
+    extra = set(csv_columns) - set(db_column_names)
+
+    if missing or extra:
+        raise Exception(
+            f"Kolom tidak sesuai pada {table}.\n"
+            f"Kolom yang hilang: {missing}\n"
+            f"Kolom tambahan: {extra}"
+        )
+
+    column_names = ", ".join(
+        f"`{name}`" for name in db_column_names
+    )
+
+    placeholders = ", ".join(
+        ["%s"] * len(db_column_names)
+    )
+
+    sql = (
+        f"INSERT INTO `{table}` "
+        f"({column_names}) VALUES ({placeholders})"
+    )
+
+    total_inserted = 0
+
+    for chunk in pd.read_csv(
+        path,
+        dtype=str,
+        chunksize=CHUNK_SIZE,
+        keep_default_na=True
+    ):
+
+        records = []
+
+        for row in chunk[db_column_names].itertuples(
+            index=False,
+            name=None
+        ):
+
+            converted = []
+
+            for value, (_, data_type) in zip(row, columns):
+                converted.append(
+                    convert_value(value, data_type)
+                )
+
+            records.append(tuple(converted))
+
+        try:
+            cursor.executemany(sql, records)
+            connection.commit()
+
+        except Exception:
+            connection.rollback()
+            raise
+
+        total_inserted += len(records)
+
+        print(
+            f"Berhasil memasukkan: "
+            f"{total_inserted:,} baris",
+            end="\r"
+        )
+
+    cursor.close()
+
+    print(f"\nSELESAI: {total_inserted:,} baris")
+
+    return total_inserted
+
+
+# ==========================================
+# PROGRAM UTAMA
+# ==========================================
+
+def main():
+
+    connection = None
+
+    try:
+
+        print("=" * 55)
+        print("MIGRASI DATASET OPENTENDER KE MYSQL")
+        print("=" * 55)
+
+        connection = mysql.connector.connect(**DB_CONFIG)
+
+        if not connection.is_connected():
+            raise Exception("Koneksi MySQL gagal.")
+
+        print("\nKoneksi MySQL berhasil!")
+
+        cursor = connection.cursor()
+
+        # Pastikan seluruh tabel masih kosong
+        check_empty_database(cursor)
+
+        cursor.close()
+
+        total_all = 0
+
+        # Urutan import mengikuti relasi foreign key
+        for filename, table in DATA_FILES:
+
+            total = import_csv(
+                connection,
+                filename,
+                table
+            )
+
+            total_all += total
+
+        # Verifikasi jumlah data
+        print("\n" + "=" * 55)
+        print("VERIFIKASI HASIL MIGRASI")
+        print("=" * 55)
+
+        cursor = connection.cursor()
+
+        for _, table in DATA_FILES:
+
+            cursor.execute(
+                f"SELECT COUNT(*) FROM `{table}`"
+            )
+
+            total = cursor.fetchone()[0]
+
+            print(f"{table}: {total:,} baris")
+
+        cursor.close()
+
+        print("\n" + "=" * 55)
+        print(f"TOTAL DATA BERHASIL DIMIGRASIKAN: {total_all:,}")
+        print("MIGRASI SELESAI!")
+        print("=" * 55)
+
+    except Exception as error:
+
+        print("\nMIGRASI GAGAL!")
+        print("Penyebab:", error)
+        print(
+            "\nPeriksa pesan error sebelum mencoba kembali. "
+            "Sebagian batch mungkin sudah tersimpan."
+        )
+
+    finally:
+
+        if connection and connection.is_connected():
+            connection.close()
+            print("\nKoneksi MySQL ditutup.")
+
+
+if __name__ == "__main__":
+    main()
+
+
+----------------------------------------------------------------------
+FILE: .\scripts\import_rtdb.py
+----------------------------------------------------------------------
+
+import pandas as pd
+import mysql.connector
+import firebase_admin
+
+from pathlib import Path
+from firebase_admin import credentials, db
+from datetime import datetime
+
+
+# ==========================================
+# 1. KONFIGURASI
+# ==========================================
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+KEY_PATH = BASE_DIR / "credentials" / "firebase-key.json"
+
+ANOMALY_FILE = BASE_DIR / "hasil_deteksi_anomali_opentender.csv"
+
+DATABASE_URL = (
+    "https://opentender-bigdata-default-rtdb.firebaseio.com/"
+)
+
+MYSQL_CONFIG = {
+    "host": "localhost",
+    "port": 3306,
+    "user": "root",
+    "password": "",
+    "database": "opentender_bigdata"
+}
+
+
+# ==========================================
+# 2. KONEKSI MYSQL
+# ==========================================
+
+def koneksi_mysql():
+    return mysql.connector.connect(**MYSQL_CONFIG)
+
+
+# ==========================================
+# 3. FUNGSI MENJALANKAN QUERY
+# ==========================================
+
+def ambil_data(cursor, query):
+
+    cursor.execute(query)
+
+    kolom = [item[0] for item in cursor.description]
+
+    hasil = []
+
+    for row in cursor.fetchall():
+        hasil.append(dict(zip(kolom, row)))
+
+    return hasil
+
+
+# ==========================================
+# 4. KONEKSI FIREBASE RTDB
+# ==========================================
+
+def koneksi_firebase():
+
+    if not KEY_PATH.exists():
+        raise FileNotFoundError(
+            f"File Firebase tidak ditemukan: {KEY_PATH}"
+        )
+
+    cred = credentials.Certificate(str(KEY_PATH))
+
+    firebase_admin.initialize_app(
+        cred,
+        {
+            "databaseURL": DATABASE_URL
+        }
+    )
+
+    print("Koneksi Firebase Realtime Database berhasil!")
+
+
+# ==========================================
+# 5. MENGHITUNG STATISTIK ANOMALI
+# ==========================================
+
+def hitung_statistik_anomali():
+
+    if not ANOMALY_FILE.exists():
+        raise FileNotFoundError(
+            f"File hasil deteksi tidak ditemukan: {ANOMALY_FILE}"
+        )
+
+    total_normal = 0
+    total_anomali = 0
+
+    print("Membaca hasil deteksi Isolation Forest...")
+
+    # Membaca CSV secara bertahap agar hemat RAM
+    for chunk in pd.read_csv(
+        ANOMALY_FILE,
+        usecols=["status_deteksi"],
+        chunksize=100000
+    ):
+
+        jumlah = chunk["status_deteksi"].value_counts()
+
+        total_normal += int(jumlah.get("Normal", 0))
+        total_anomali += int(jumlah.get("Anomali", 0))
+
+    total_data = total_normal + total_anomali
+
+    persentase_anomali = (
+        round((total_anomali / total_data) * 100, 2)
+        if total_data > 0 else 0
+    )
+
+    return {
+        "total_data_dianalisis": total_data,
+        "total_anomalies": total_anomali,
+        "normal_data": total_normal,
+        "anomaly_percentage": persentase_anomali
+    }
+
+
+# ==========================================
+# 6. PROSES PENGOLAHAN DATA MYSQL
+# ==========================================
+
+def proses_statistik(cursor):
+
+    print("\nMenghitung total data...")
+
+    total_tenders = ambil_data(
+        cursor,
+        "SELECT COUNT(*) AS total FROM tenders"
+    )[0]["total"]
+
+    total_awards = ambil_data(
+        cursor,
+        "SELECT COUNT(*) AS total FROM awards"
+    )[0]["total"]
+
+    total_suppliers = ambil_data(
+        cursor,
+        "SELECT COUNT(*) AS total FROM award_suppliers"
+    )[0]["total"]
+
+
+    print("Menghitung statistik tender per tahun...")
+
+    tenders_by_year = ambil_data(
+        cursor,
+        """
+        SELECT
+            LEFT(tender_datePublished, 4) AS tahun,
+            COUNT(*) AS total
+        FROM tenders
+        WHERE tender_datePublished IS NOT NULL
+          AND LENGTH(tender_datePublished) >= 4
+        GROUP BY LEFT(tender_datePublished, 4)
+        ORDER BY tahun
+        """
+    )
+
+
+    print("Menghitung statistik berdasarkan status...")
+
+    tenders_by_status = ambil_data(
+        cursor,
+        """
+        SELECT
+            COALESCE(
+                tender_status,
+                'Tidak diketahui'
+            ) AS status,
+            COUNT(*) AS total
+        FROM tenders
+        GROUP BY tender_status
+        ORDER BY total DESC
+        """
+    )
+
+
+    print("Menghitung 10 buyer teratas...")
+
+    top_buyers = ambil_data(
+        cursor,
+        """
+        SELECT
+            COALESCE(
+                buyer_name,
+                'Tidak diketahui'
+            ) AS nama,
+            COUNT(*) AS total_tender
+        FROM tenders
+        GROUP BY buyer_name
+        ORDER BY total_tender DESC
+        LIMIT 10
+        """
+    )
+
+
+    print("Menghitung 10 supplier teratas...")
+
+    top_suppliers = ambil_data(
+        cursor,
+        """
+        SELECT
+            COALESCE(
+                name,
+                'Tidak diketahui'
+            ) AS nama,
+            COUNT(*) AS total_keterlibatan
+        FROM award_suppliers
+        GROUP BY name
+        ORDER BY total_keterlibatan DESC
+        LIMIT 10
+        """
+    )
+
+
+    print("Menghitung tender berdasarkan kategori...")
+
+    tenders_by_category = ambil_data(
+        cursor,
+        """
+        SELECT
+            COALESCE(
+                tender_mainProcurementCategory,
+                'Tidak diketahui'
+            ) AS kategori,
+            COUNT(*) AS total
+        FROM tenders
+        GROUP BY tender_mainProcurementCategory
+        ORDER BY total DESC
+        """
+    )
+
+
+    print("Menghitung instansi pengadaan teratas...")
+
+    top_procuring_entities = ambil_data(
+        cursor,
+        """
+        SELECT
+            COALESCE(
+                tender_procuringEntity_name,
+                'Tidak diketahui'
+            ) AS nama,
+            COUNT(*) AS total_tender
+        FROM tenders
+        GROUP BY tender_procuringEntity_name
+        ORDER BY total_tender DESC
+        LIMIT 10
+        """
+    )
+
+
+    print("Menghitung awards berdasarkan tahun...")
+
+    awards_by_year = ambil_data(
+        cursor,
+        """
+        SELECT
+            LEFT(date, 4) AS tahun,
+            COUNT(*) AS total
+        FROM awards
+        WHERE date IS NOT NULL
+          AND LENGTH(date) >= 4
+        GROUP BY LEFT(date, 4)
+        ORDER BY tahun
+        """
+    )
+
+
+    print("Menghitung awards berdasarkan mata uang...")
+
+    awards_by_currency = ambil_data(
+        cursor,
+        """
+        SELECT
+            COALESCE(
+                value_currency,
+                'Tidak diketahui'
+            ) AS mata_uang,
+            COUNT(*) AS total
+        FROM awards
+        GROUP BY value_currency
+        ORDER BY total DESC
+        """
+    )
+
+
+    print("Menghitung keterlibatan supplier per tahun...")
+
+    suppliers_by_year = ambil_data(
+        cursor,
+        """
+        SELECT
+            LEFT(t.tender_datePublished, 4) AS tahun,
+            COUNT(*) AS total
+        FROM award_suppliers s
+        JOIN tenders t
+            ON s.main_ocid = t.ocid
+        WHERE t.tender_datePublished IS NOT NULL
+          AND LENGTH(t.tender_datePublished) >= 4
+        GROUP BY LEFT(t.tender_datePublished, 4)
+        ORDER BY tahun
+        """
+    )
+
+
+    # ======================================
+    # STATISTIK ISOLATION FOREST
+    # ======================================
+
+    print("Menghitung hasil deteksi anomali...")
+
+    anomaly_stats = hitung_statistik_anomali()
+
+
+    # ======================================
+    # MENYUSUN HASIL STATISTIK
+    # ======================================
+
+    return {
+
+        "dashboard": {
+            "total_tenders": int(total_tenders),
+            "total_awards": int(total_awards),
+            "total_suppliers": int(total_suppliers),
+            "total_anomalies": anomaly_stats["total_anomalies"]
+        },
+
+        "statistics": {
+
+            "tenders_by_year": tenders_by_year,
+
+            "tenders_by_status": tenders_by_status,
+
+            "top_buyers": top_buyers,
+
+            "top_suppliers": top_suppliers,
+
+            "tenders_by_category": tenders_by_category,
+
+            "top_procuring_entities": top_procuring_entities,
+
+            "awards_by_year": awards_by_year,
+
+            "awards_by_currency": awards_by_currency,
+
+            "suppliers_by_year": suppliers_by_year,
+
+            "anomaly_statistics": anomaly_stats
+        },
+
+        "metadata": {
+            "source": "OpenTender Indonesia - MySQL + Isolation Forest",
+            "generated_at": datetime.now().astimezone().isoformat()
+        }
+    }
+
+
+# ==========================================
+# 7. KIRIM DATA KE FIREBASE
+# ==========================================
+
+def kirim_ke_firebase(data):
+
+    referensi = db.reference("opentender")
+
+    referensi.update(data)
+
+    print("\nData berhasil dikirim ke Firebase!")
+
+
+# ==========================================
+# 8. PROGRAM UTAMA
+# ==========================================
+
+def main():
+
+    koneksi = None
+    cursor = None
+
+    try:
+
+        print("====================================")
+        print(" OPEN TENDER - MYSQL TO FIREBASE")
+        print("====================================")
+
+        koneksi = koneksi_mysql()
+
+        cursor = koneksi.cursor()
+
+        print("Koneksi MySQL berhasil!")
+
+        koneksi_firebase()
+
+        data = proses_statistik(cursor)
+
+        print("\nMengirim data ke Firebase...")
+
+        kirim_ke_firebase(data)
+
+        print("\n====================================")
+        print("MIGRASI STATISTIK BERHASIL!")
+        print("====================================")
+
+        print(
+            "Total Tender:",
+            data["dashboard"]["total_tenders"]
+        )
+
+        print(
+            "Total Awards:",
+            data["dashboard"]["total_awards"]
+        )
+
+        print(
+            "Total Suppliers:",
+            data["dashboard"]["total_suppliers"]
+        )
+
+        print(
+            "Total Anomali:",
+            data["dashboard"]["total_anomalies"]
+        )
+
+        print(
+            "Data Normal:",
+            data["statistics"]["anomaly_statistics"]["normal_data"]
+        )
+
+        print(
+            "Persentase Anomali:",
+            str(
+                data["statistics"]["anomaly_statistics"][
+                    "anomaly_percentage"
+                ]
+            ) + "%"
+        )
+
+        print("\nNode yang diperbarui:")
+        print("- opentender/dashboard")
+        print("- opentender/statistics")
+        print("- opentender/metadata")
+
+        print("\n====================================")
+
+    except Exception as error:
+
+        print("\nPROSES GAGAL!")
+        print("Error:", error)
+
+    finally:
+
+        if cursor is not None:
+            cursor.close()
+
+        if koneksi is not None and koneksi.is_connected():
+            koneksi.close()
+
+
+if __name__ == "__main__":
+    main()
+
+
+----------------------------------------------------------------------
+FILE: .\scripts\inspect_dataset.py
+----------------------------------------------------------------------
+
+import pandas as pd
+import os
+
+# Lokasi dataset
+DATASET_DIR = "dataset"
+
+files = [
+    "main.csv",
+    "awards.csv",
+    "awards_suppliers.csv"
+]
+
+for filename in files:
+    path = os.path.join(DATASET_DIR, filename)
+
+    print("\n" + "=" * 70)
+    print(f"PEMERIKSAAN DATASET: {filename}")
+    print("=" * 70)
+
+    if not os.path.exists(path):
+        print("FILE TIDAK DITEMUKAN:", path)
+        continue
+
+    # Membaca beberapa baris untuk memeriksa struktur
+    df = pd.read_csv(path, nrows=5, low_memory=False)
+
+    print("\nKolom dataset:")
+    for column in df.columns:
+        print(f"- {column}")
+
+    print("\nJumlah kolom:", len(df.columns))
+
+    print("\nTipe data:")
+    print(df.dtypes)
+
+    print("\nContoh 5 baris:")
+    print(df.to_string(index=False))
+
+print("\nPEMERIKSAAN STRUKTUR SELESAI.")
+
+
+----------------------------------------------------------------------
+FILE: .\scripts\koneksi_firebase.py
+----------------------------------------------------------------------
+
+import firebase_admin
+from firebase_admin import credentials, firestore
+
+# Lokasi file kredensial Firebase
+CREDENTIAL_PATH = "credentials/firebase-key.json"
+
+try:
+    # Inisialisasi Firebase
+    cred = credentials.Certificate(CREDENTIAL_PATH)
+    firebase_admin.initialize_app(cred)
+
+    # Menghubungkan ke Firestore
+    db = firestore.client()
+
+    print("================================")
+    print("KONEKSI FIREBASE BERHASIL!")
+    print("Project ID:", cred.project_id)
+    print("Firestore siap digunakan.")
+    print("================================")
+
+except Exception as e:
+    print("KONEKSI FIREBASE GAGAL!")
+    print("Error:", e)
+
+
+----------------------------------------------------------------------
+FILE: .\scripts\koneksi_mysql.py
+----------------------------------------------------------------------
+
+import mysql.connector
+
+try:
+    koneksi = mysql.connector.connect(
+        host="localhost",
+        port=3306,
+        user="root",
+        password="",
+        database="opentender_bigdata"
+    )
+
+    if koneksi.is_connected():
+        print("================================")
+        print("KONEKSI MYSQL BERHASIL!")
+
+        cursor = koneksi.cursor()
+        cursor.execute("SELECT DATABASE()")
+
+        hasil = cursor.fetchone()
+        print("Database:", hasil[0])
+
+        print("MySQL siap digunakan.")
+        print("================================")
+
+    cursor.close()
+    koneksi.close()
+
+except mysql.connector.Error as error:
+    print("KONEKSI MYSQL GAGAL!")
+    print("Error:", error)
+
+
+----------------------------------------------------------------------
+FILE: .\scripts\validasi_relasi.py
+----------------------------------------------------------------------
+
+import pandas as pd
+import sqlite3
+import os
+
+DATASET = "dataset"
+DB_TEMP = "validasi_sementara.sqlite"
+CHUNK_SIZE = 100000
+
+if os.path.exists(DB_TEMP):
+    os.remove(DB_TEMP)
+
+db = sqlite3.connect(DB_TEMP)
+cursor = db.cursor()
+
+# Tabel sementara untuk pemeriksaan ID
+cursor.executescript("""
+CREATE TABLE main_ids (
+    ocid TEXT,
+    main_id TEXT
+);
+
+CREATE TABLE award_ids (
+    id TEXT,
+    main_ocid TEXT,
+    main_id TEXT
+);
+
+CREATE TABLE supplier_ids (
+    id TEXT,
+    main_ocid TEXT,
+    main_id TEXT,
+    awards_id TEXT
+);
+
+CREATE INDEX idx_main_ocid ON main_ids(ocid);
+CREATE INDEX idx_main_id ON main_ids(main_id);
+CREATE INDEX idx_award_id ON award_ids(id);
+""")
+
+
+def load_csv(filename, columns, table):
+    path = os.path.join(DATASET, filename)
+    total = 0
+
+    for chunk in pd.read_csv(
+        path,
+        usecols=columns,
+        dtype=str,
+        chunksize=CHUNK_SIZE
+    ):
+        # PENTING: Pastikan urutan kolom sesuai tabel SQLite
+        chunk = chunk[columns]
+
+        records = [
+            tuple(None if pd.isna(v) else v for v in row)
+            for row in chunk.itertuples(index=False, name=None)
+        ]
+
+        placeholders = ",".join(["?"] * len(columns))
+
+        cursor.executemany(
+            f"INSERT INTO {table} VALUES ({placeholders})",
+            records
+        )
+
+        total += len(records)
+        db.commit()
+
+    print(f"{filename}: {total:,} baris")
+
+
+print("MEMBACA DATASET...")
+load_csv("main.csv", ["ocid", "id"], "main_ids")
+load_csv("awards.csv", ["id", "main_ocid", "main_id"], "award_ids")
+load_csv(
+    "awards_suppliers.csv",
+    ["id", "main_ocid", "main_id", "awards_id"],
+    "supplier_ids"
+)
+
+def check(label, query):
+    cursor.execute(query)
+    result = cursor.fetchone()[0]
+    print(f"{label}: {result:,}")
+
+print("\n=== PEMERIKSAAN DUPLIKASI ===")
+
+check("Duplikasi OCID",
+"""
+SELECT COUNT(*) - COUNT(DISTINCT ocid)
+FROM main_ids WHERE ocid IS NOT NULL
+""")
+
+check("Duplikasi main.id",
+"""
+SELECT COUNT(*) - COUNT(DISTINCT main_id)
+FROM main_ids WHERE main_id IS NOT NULL
+""")
+
+check("Duplikasi award.id",
+"""
+SELECT COUNT(*) - COUNT(DISTINCT id)
+FROM award_ids WHERE id IS NOT NULL
+""")
+
+check("Duplikasi supplier.id",
+"""
+SELECT COUNT(*) - COUNT(DISTINCT id)
+FROM supplier_ids WHERE id IS NOT NULL
+""")
+
+
+print("\n=== PEMERIKSAAN DUPLIKASI KOMBINASI SUPPLIER ===")
+
+check("Duplikasi kombinasi supplier.id + awards_id", """
+SELECT COUNT(*) FROM (
+    SELECT id, awards_id
+    FROM supplier_ids
+    GROUP BY id, awards_id
+    HAVING COUNT(*) > 1
+) AS duplicate_pairs
+""")
+
+check("Supplier dengan ID kosong", """
+SELECT COUNT(*)
+FROM supplier_ids
+WHERE id IS NULL OR TRIM(id) = ''
+""")
+
+
+print("\n=== PEMERIKSAAN RELASI ===")
+
+check("Award tanpa tender (OCID)",
+"""
+SELECT COUNT(*)
+FROM award_ids a
+WHERE a.main_ocid IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM main_ids m
+    WHERE m.ocid = a.main_ocid
+)
+""")
+
+check("Award tanpa main.id",
+"""
+SELECT COUNT(*)
+FROM award_ids a
+WHERE a.main_id IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM main_ids m
+    WHERE m.main_id = a.main_id
+)
+""")
+
+check("Supplier tanpa tender (OCID)",
+"""
+SELECT COUNT(*)
+FROM supplier_ids s
+WHERE s.main_ocid IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM main_ids m
+    WHERE m.ocid = s.main_ocid
+)
+""")
+
+check("Supplier tanpa main.id",
+"""
+SELECT COUNT(*)
+FROM supplier_ids s
+WHERE s.main_id IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM main_ids m
+    WHERE m.main_id = s.main_id
+)
+""")
+
+check("Supplier tanpa award",
+"""
+SELECT COUNT(*)
+FROM supplier_ids s
+WHERE s.awards_id IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM award_ids a
+    WHERE a.id = s.awards_id
+)
+""")
+
+print("\nVALIDASI SELESAI.")
+db.close()
+

@@ -1,0 +1,102 @@
+==================================================================================
+LAPORAN EKSPERIMEN KOMPARATIF LEVEL OCID: ISOLATION FOREST VS RULE-BASED RED FLAG
+Waktu Eksekusi: 2026-11-19 16:51:47
+RAM Awal Proses: 158.64 MB
+==================================================================================
+
+[TAHAP 1] PEMUATAN & AGREGASI DATA MYSQL KE TINGKAT OCID
+  - Total baris tabel tenders         : 1,303,374
+  - Total baris tabel awards          : 1,086,425
+  - Total baris tabel award_suppliers : 1,086,441
+  - Waktu baca MySQL                  : 74.10 detik (RAM: 724.43 MB)
+
+[EKSPERIMEN 1] RINGKASAN PENYUSUTAN & KUALITAS DATA LEVEL OCID
+  1. Populasi awal tenders (main.csv)          : 1,303,374 OCID
+  2. Baris awards mentah                       : 1,086,425 baris
+  3. Baris awards valid (value_amount > 0)     : 1,086,425 baris
+  4. OCID unik setelah agregasi awards         : 1,086,425 OCID
+  5. Dataset analisis final (1 baris / OCID)   : 1,086,425 OCID
+  - Missing tender_minValue_amount (NaN)       : 415 (0.04%)
+  - Nilai tender_minValue_amount <= 0          : 0 (0.00%)
+  - Tanggal publikasi kosong/tidak valid       : 0 (0.00%)
+
+  Distribusi Kategori Pengadaan pada Populasi OCID:
+    * works: 612,564 (56.38%)
+    * services: 316,411 (29.12%)
+    * goods: 157,450 (14.49%)
+
+[TAHAP 2] FEATURE ENGINEERING & RETRAINING ISOLATION FOREST (7 FITUR)
+  - Backup model lama  : Tidak diperlukan (sudah ada)
+  - Model baru disimpan: C:\Users\halim\Downloads\opentender-anomaly-detection\model_isolation_forest_opentender.joblib
+  - Median Imputer     : {'log_min_value': np.float64(20.248737), 'log_award_value': np.float64(20.185668), 'selisih_award_rel': np.float64(0.0279)}
+  - Offset IsolationF  : -0.670344
+  - Waktu Feature+Train: 29.88 detik (RAM: 1293.46 MB)
+
+[EKSPERIMEN 2] KARAKTERISTIK HASIL ISOLATION FOREST (LEVEL OCID)
+  - Total Normal (1)   : 1,075,563 (99.00%)
+  - Total Anomali (-1) : 10,862 (1.00%)
+
+  Statistik Kelompok Normal (1) (n=1,075,563):
+    * tender_minValue_amount   | Median=610,227,500.0000 | Q1=341,419,912.5000 | Q3=1,499,707,326.0225 | Max=4,286,668,930,000.0000
+    * value_amount             | Median=578,332,000.0000 | Q1=315,415,668.3050 | Q3=1,411,339,850.0000 | Max=4,242,926,100,000.0000
+    * selisih_award_rel        | Median=0.0277 | Q1=0.0100 | Q3=0.0814 | Max=0.9992
+    * skor_anomali             | Median=0.4644 | Q1=0.4278 | Q3=0.5163 | Max=0.6703
+    * Proporsi min_value_missing = 1 : 0.04%
+
+  Statistik Kelompok Anomali (-1) (n=10,862):
+    * tender_minValue_amount   | Median=31,535,429,740.5500 | Q1=14,836,489,550.7750 | Q3=70,187,756,500.0000 | Max=4,603,896,628,485.2402
+    * value_amount             | Median=28,736,700,000.0000 | Q1=7,090,131,075.0000 | Q3=63,480,147,000.0000 | Max=4,585,032,615,891.1201
+    * selisih_award_rel        | Median=0.1089 | Q1=0.0050 | Q3=0.3650 | Max=1.0000
+    * skor_anomali             | Median=0.6920 | Q1=0.6793 | Q3=0.7075 | Max=0.7859
+    * Proporsi min_value_missing = 1 : 0.00%
+
+  Proporsi Anomali Isolation Forest per Kategori Pengadaan:
+    * goods       : Anomali=5,969 / 157,450 (3.79%)
+    * services    : Anomali=3,986 / 316,411 (1.26%)
+    * works       : Anomali=907 / 612,564 (0.15%)
+
+[EKSPERIMEN 3] EVALUASI RULE-BASED RED FLAG & SENSITIVITAS PARAMETER
+  - Waktu komputasi 4 indikator Red Flag: 2.14 detik
+    * RF-1 Deviasi Harga (<1% pagu / >pagu)     : 269,152 (24.77%)
+    * RF-2 Durasi Singkat (<7 hari)             : 28,597 (2.63%)
+    * RF-3 Pengadaan Kuartal IV (Okt-Des)       : 149,302 (13.74%)
+    * RF-4 Konsentrasi Penyedia (>=20%)         : 82 (0.01%)
+
+  Distribusi Skor Komposit Red Flag (rf_score 0..4):
+    * rf_score = 0: 692,320 (63.72%)
+    * rf_score = 1: 343,447 (31.61%)
+    * rf_score = 2: 48,288 (4.44%)
+    * rf_score = 3: 2,370 (0.22%)
+
+  Uji Sensitivitas Ambang Red Flag (vs Isolation Forest 1%):
+    * Ambang rf_score >= 1: Flagged=394,105 (36.28%) | Irisan=5,698 | Jaccard=0.0143 | OverlapCoeff=0.5246
+    * Ambang rf_score >= 2: Flagged=50,658 (4.66%) | Irisan=878 | Jaccard=0.0145 | OverlapCoeff=0.0808
+    * Ambang rf_score >= 3: Flagged=2,370 (0.22%) | Irisan=9 | Jaccard=0.0007 | OverlapCoeff=0.0038
+
+  Uji Sensitivitas Parameter Contamination Isolation Forest (vs rf_score >= 2):
+    * contamination=0.005 -> Anomali=5,434 | Irisan dengan RF>=2: 448 | Jaccard=0.0081
+    * contamination=0.010 -> Anomali=10,873 | Irisan dengan RF>=2: 878 | Jaccard=0.0145
+    * contamination=0.020 -> Anomali=21,730 | Irisan dengan RF>=2: 1,641 | Jaccard=0.0232
+    * contamination=0.050 -> Anomali=54,330 | Irisan dengan RF>=2: 3,530 | Jaccard=0.0348
+
+[EKSPERIMEN 4] ANALISIS IRISAN & KESEPAKATAN METODE (IF 1% VS RF >= 2)
+  Matriks Kontingensi 2x2:
+    - Keduanya Menandai (IF=-1 & RF>=2)     : 878 (0.081%)
+    - Hanya Isolation Forest (IF=-1 & RF<2) : 9,984 (0.919%)
+    - Hanya Red Flag (IF=1 & RF>=2)         : 49,780 (4.582%)
+    - Tidak Ditandai Keduanya               : 1,025,783 (94.418%)
+  Metrik Kesepakatan Non-Ground-Truth:
+    - Jaccard Similarity Index              : 0.0145
+    - Overlap Coefficient                   : 0.0808
+    - Korelasi Peringkat Spearman (rho)     : 0.0261 (p-value=1.0621e-162)
+  - 30 sampel studi kasus diekspor ke     : studi_kasus_anomali.csv
+
+[EKSPERIMEN 5] BENCHMARK WAKTU INFERENCE SKALA BATCH
+  - Ukuran Batch    10,000 OCID | Inference IF=0.218s | RedFlag=0.045s | Total=0.263s
+  - Ukuran Batch   100,000 OCID | Inference IF=1.707s | RedFlag=0.212s | Total=1.920s
+  - Ukuran Batch 1,086,425 OCID | Inference IF=18.525s | RedFlag=1.945s | Total=20.470s
+
+  - Backup CSV lama   : C:\Users\halim\Downloads\opentender-anomaly-detection\hasil_deteksi_anomali_opentender.backup.csv
+  - CSV baru disimpan : C:\Users\halim\Downloads\opentender-anomaly-detection\hasil_deteksi_anomali_opentender.csv (1,086,425 baris)
+  - Total Waktu Pipeline: 149.02 detik | Puncak RAM: 1817.55 MB
+==================================================================================
